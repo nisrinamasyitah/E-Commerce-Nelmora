@@ -82,7 +82,7 @@ p { margin: 0 0 1em; }
 .header.scrolled { box-shadow: 0 6px 24px rgba(36, 28, 26, .06); }
 .header.over { background: transparent; color: var(--cream); border-color: rgba(246, 240, 230, .14); backdrop-filter: none; }
 .header.over .wordmark { color: var(--cream); }
-.header-inner { max-width: 1320px; margin: 0 auto; padding: 0 var(--gutter); height: var(--header-h); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem; }
+.header-inner { max-width: none; margin: 0; padding: 0 clamp(20px, 3.5vw, 64px); height: var(--header-h); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; column-gap: 2.5rem; }
 .nav { display: flex; align-items: center; gap: clamp(1.2rem, 2vw, 2.1rem); }
 .nav a { text-decoration: none; font-size: .68rem; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; position: relative; padding: .4rem 0; white-space: nowrap; }
 .nav a::after { content: ''; position: absolute; left: 0; right: 100%; bottom: 0; height: 1px; background: currentColor; transition: right .3s var(--ease); }
@@ -91,8 +91,8 @@ p { margin: 0 0 1em; }
 .header-right { display: flex; justify-content: flex-end; align-items: center; gap: .6rem; }
 .wordmark { text-decoration: none; text-align: center; display: inline-flex; flex-direction: column; align-items: center; color: var(--wine); transition: color .35s; }
 .wordmark.light { color: var(--cream); }
-.wm-main { font-family: var(--serif); font-weight: 500; font-size: 1.6rem; letter-spacing: .46em; margin-right: -.46em; line-height: 1; }
-.wm-script { font-family: var(--script); font-size: 1.15rem; line-height: 1; margin-top: -.05rem; }
+.wm-main { font-family: var(--serif); font-weight: 700; font-size: 1.7rem; letter-spacing: .42em; margin-right: -.42em; line-height: 1; }
+.wm-script { font-family: var(--script); font-size: 1.25rem; line-height: 1; margin-top: -.05rem; -webkit-text-stroke: .5px currentColor; }
 .wordmark.small { align-items: flex-start; }
 .wordmark.small .wm-main { font-size: 1.25rem; }
 .wordmark.small .wm-script { margin-left: 2.6rem; }
@@ -462,7 +462,7 @@ legend { font-family: var(--serif); font-size: 1.45rem; margin-bottom: 1rem; pad
 .policy-body a { color: var(--wine); }
 
 /* ------------------------------------------------ responsive */
-@media (max-width: 1180px) {
+@media (max-width: 1360px) {
   .menu-btn { display: inline-grid; justify-self: start; }
   .nav { display: none; position: absolute; top: 100%; left: 0; right: 0; height: calc(100vh - var(--header-h)); flex-direction: column; align-items: stretch; gap: 0; background: var(--paper); color: var(--ink); padding: 1rem var(--gutter) 2rem; overflow-y: auto; }
   .nav.open { display: flex; }
