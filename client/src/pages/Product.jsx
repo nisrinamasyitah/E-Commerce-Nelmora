@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useStore } from '../store';
-import { rm, notesList, useTitle } from '../lib';
+import { rm, notesList, noteImage, useTitle } from '../lib';
 import PaymentLogos from '../components/PaymentLogos';
 import QtyInput from '../components/QtyInput';
 import ProductCard from '../components/ProductCard';
@@ -102,7 +102,16 @@ export default function Product() {
             <div className="pdp-section">
               <h3>Key notes</h3>
               <ul className="notes-list">
-                {notes.map((n, i) => <li key={n}><span className="note-num">{String(i + 1).padStart(2, '0')}</span>{n}</li>)}
+                {notes.map((n, i) => {
+                  const pic = noteImage(n);
+                  return (
+                    <li key={n}>
+                      <span className="note-num">{String(i + 1).padStart(2, '0')}</span>
+                      <span className="note-name">{n}</span>
+                      {pic && <img className="note-pic" src={pic} alt={n} loading="lazy" />}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
 

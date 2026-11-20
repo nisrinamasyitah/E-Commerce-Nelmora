@@ -43,3 +43,17 @@ export function useTitle(title) {
 }
 
 export const notesList =(notes) => String(notes || '').split(',').map((n) => n.trim()).filter(Boolean);
+
+// Ingredient pictures from the catalogue (public/images/notes). Matches the note name loosely, so
+// "Calabrian Bergamot" and "Bourbon Vanilla" still find their picture. Returns null if there is none.
+const NOTE_PICS = [
+  ['bergamot', 'bergamot'], ['black tea', 'black-tea'], ['guaiac', 'guaiac-wood'], ['patchouli', 'patchouli'], ['tonka', 'tonka-bean'],
+  ['cocoa', 'cocoa'], ['marine', 'marine'], ['musk', 'musk'], ['coffee', 'coffee'], ['vanilla', 'vanilla'], ['sugar', 'sugar'],
+  ['marshmallow', 'marshmallow'], ['strawberry', 'strawberry'], ['cedar', 'cedarwood'], ['powder', 'powdery'], ['currant', 'black-currant'],
+  ['berries', 'berries'], ['woody', 'woody-notes'], ['sandalwood', 'sandalwood'], ['citruses', 'citruses'], ['citrus', 'citrus'],
+];
+export const noteImage = (note) => {
+  const n = String(note || '').toLowerCase();
+  const hit = NOTE_PICS.find(([key]) => n.includes(key));
+  return hit ? `/images/notes/${hit[1]}.webp` : null;
+};

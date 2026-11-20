@@ -323,7 +323,9 @@ p { margin: 0 0 1em; }
 .pdp-section h3 { font: 500 .7rem/1 var(--sans); letter-spacing: .22em; text-transform: uppercase; margin-bottom: 1rem; }
 .pdp-desc { line-height: 1.8; color: #3d332e; margin: 0; }
 .notes-list { list-style: none; margin: 0; padding: 0; }
-.notes-list li { display: flex; align-items: baseline; gap: 1.2rem; padding: .7rem 0; border-bottom: 1px solid var(--line); font-family: var(--serif); font-size: 1.2rem; }
+.notes-list li { display: flex; align-items: center; gap: 1.2rem; padding: .6rem 0; border-bottom: 1px solid var(--line); font-family: var(--serif); font-size: 1.2rem; }
+.note-name { flex: 1; }
+.note-pic { width: 120px; height: 84px; object-fit: contain; flex-shrink: 0; }
 .notes-list li:last-child { border-bottom: 0; }
 .note-num { font-family: var(--sans); font-size: .66rem; letter-spacing: .14em; color: var(--muted); }
 .acc { border-top: 1px solid var(--line); padding: 1.1rem 0; }
