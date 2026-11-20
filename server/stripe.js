@@ -65,4 +65,4 @@ function verifyWebhook(raw, header) {
   try { return JSON.parse(raw.toString('utf8')); } catch { return null; }
 }
 
-module.exports = { enabled: !!KEY, createCheckout, getSession, verifyWebhook, encode };
+module.exports = { enabled: !!KEY, test: KEY.startsWith('sk_test_') || KEY.startsWith('rk_test_'), createCheckout, getSession, verifyWebhook, encode };

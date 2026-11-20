@@ -89,14 +89,23 @@ Every push to GitHub redeploys automatically. Orders, products and settings live
 
 **Prices are always checked by the server**, so nobody can change a price in their browser.
 
-## Online payment (Stripe: FPX, card, GrabPay)
+## Online payment (Stripe: Visa/Mastercard cards + FPX)
 
-1. Create a Stripe account (Malaysia) and enable FPX and GrabPay under Settings → Payment methods.
-2. Add `STRIPE_SECRET_KEY` to the Netlify environment variables.
-3. In Stripe → Developers → Webhooks add the URL `https://YOUR-SITE/api/stripe/webhook`, event `checkout.session.completed`, and put its signing secret in `STRIPE_WEBHOOK_SECRET`.
-4. Redeploy.
+The shop already has Stripe built in; it switches on when it has your Stripe keys. Customers pay on Stripe's secure page and the order is marked **paid automatically** (you no longer check your bank by hand). Bank transfer stays available as the second option.
 
-Leave it empty and the shop takes bank transfer only.
+1. **Create a Stripe account** at stripe.com (choose Malaysia) and finish the activation steps they ask for (business details, bank account for payouts). You can try everything in **test mode** before that is done.
+2. In the Stripe dashboard turn on the methods you want under **Settings → Payment methods**: cards are on by default; switch on **FPX** (and **GrabPay** if you like). Apple Pay and Google Pay appear by themselves for cards on supported phones.
+3. Copy your **secret key** (Developers → API keys). Start with the test key `sk_test_...`.
+4. Run the helper and paste the key when asked:
+   ```bash
+   bash scripts/connect-stripe.sh
+   ```
+   It checks the key, creates the Stripe webhook for you, saves both on Netlify and redeploys. Your key never goes into the code.
+5. **Test it:** choose "Pay online" at checkout. Card `4242 4242 4242 4242`, any future date, any CVC. For FPX pick a test bank and press Authorize. The checkout shows a "Test mode" note while a test key is in use.
+6. **Go live:** when Stripe says your account is active, run the helper again with the live key `sk_live_...` (it asks you to type YES).
+7. In **Admin → Settings → Payment logos**, tick only the methods you really switched on in Stripe.
+
+How it behaves: stock is reserved when the customer reaches the payment page; if they abandon it or the payment fails, the stock is released straight away. Prices are always taken from the server, never from the browser. Stripe's fees are taken from each payment; check the current rates on stripe.com/my/pricing.
 
 ## Backups
 

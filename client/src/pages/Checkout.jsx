@@ -27,6 +27,13 @@ export default function Checkout() {
 
   useEffect(() => { if (config?.stripeEnabled) setMethod('stripe'); }, [config?.stripeEnabled]);
 
+  const logos = config?.paymentLogos || [];
+  const onlineMethods = [
+    logos.includes('fpx') && 'FPX online banking',
+    ['visa', 'mastercard', 'amex'].some((m) => logos.includes(m)) && 'credit/debit card',
+    logos.includes('grabpay') && 'GrabPay',
+  ].filter(Boolean).join(', ') || 'Credit/debit card';
+
   const itemsKey = JSON.stringify(cart.map((c) => [c.variantId, c.qty]));
   useEffect(() => {
     if (!cart.length) { setQuote(null); return; }
@@ -128,7 +135,7 @@ export default function Checkout() {
               {config?.stripeEnabled && (
                 <label className={`pay-opt${method === 'stripe' ? ' on' : ''}`}>
                   <input type="radio" name="pay" checked={method === 'stripe'} onChange={() => setMethod('stripe')} />
-                  <div><strong>Pay online</strong><span className="muted small">FPX online banking, credit/debit card, GrabPay. Secured by Stripe.</span></div>
+                  <div><strong>Pay online</strong><span className="muted small">{onlineMethods}. Secured by Stripe.</span></div>
                 </label>
               )}
               <label className={`pay-opt${method === 'transfer' ? ' on' : ''}`}>
@@ -136,6 +143,7 @@ export default function Checkout() {
                 <div><strong>Bank transfer / DuitNow</strong><span className="muted small">We’ll show our account details after you place the order. Send us the receipt on WhatsApp.</span></div>
               </label>
             </div>
+            {config?.stripeTest && method === 'stripe' && <p className="notice"><b>Test mode:</b> no real money is taken. Use card 4242 4242 4242 4242, any future date and any CVC.</p>}
             <div className="pay-accept dark"><span>We accept</span><PaymentLogos methods={config?.paymentLogos} /></div>
           </fieldset>
 

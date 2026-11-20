@@ -128,6 +128,15 @@ async function markPaid(code, sessionId) {
   });
 }
 
+async function cancelUnpaid(code) {
+  await db.tx(async (t) => {
+    const o = await t.get('SELECT id FROM orders WHERE code = ? AND payment_method = ? AND payment_status = ? AND status = ?', [code, 'stripe', 'unpaid', 'new']);
+    if (!o) return;
+    await t.run("UPDATE orders SET status = 'cancelled', admin_note = TRIM(admin_note || ' Auto-cancelled: online payment expired or failed.') WHERE id = ?", [o.id]);
+    await restock(t, o.id);
+  });
+}
+
 // Card/FPX orders that were never paid release their stock after 2 hours.
 // There is no background timer in serverless, so this runs (at most once a minute) when the shop is used.
 let lastExpire = 0;
@@ -157,9 +166,12 @@ app.use('/api', (_req, res, next) => { res.set('Cache-Control', 'no-store'); nex
 app.post('/api/stripe/webhook', express.raw({ type: '*/*', limit: '1mb' }), async (req, res) => {
   const event = stripe.verifyWebhook(req.body, req.headers['stripe-signature']);
   if (!event) return res.status(400).send('Bad signature');
-  if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
-    const s = event.data.object;
-    if (s.payment_status === 'paid' && s.metadata?.order_code) await markPaid(s.metadata.order_code, s.id);
+  const s = event.data?.object || {};
+  const code = s.metadata?.order_code;
+  if (code) {
+    if ((event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') && s.payment_status === 'paid') await markPaid(code, s.id);
+    // the customer never finished paying (window closed / session expired / bank declined): free the stock right away
+    if (event.type === 'checkout.session.expired' || event.type === 'checkout.session.async_payment_failed') await cancelUnpaid(code);
   }
   res.json({ received: true });
 });
@@ -177,6 +189,7 @@ app.get('/api/config', async (_req, res) => {
     welcome: { amount: s.welcome_discount, minSpend: s.welcome_min_spend },
     paymentLogos: stripe.enabled ? chosenLogos(s.payment_logos) : chosenLogos(s.payment_logos).filter((x) => x === 'duitnow'),
     stripeEnabled: stripe.enabled,
+    stripeTest: stripe.enabled && stripe.test,
   });
 });
 
