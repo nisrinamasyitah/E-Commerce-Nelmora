@@ -12,6 +12,22 @@ SITE_URL="https://nelmoramy.netlify.app"
 HOOK_URL="$SITE_URL/api/stripe/webhook"
 TMP="$(mktemp)"; trap 'rm -f "$TMP"' EXIT
 
+# A pasted secret sometimes arrives twice in a row (a double paste). This removes the repeat, plus stray spaces/quotes.
+clean_secret() {
+  RAW_SECRET="$1" python3 - <<'PY'
+import os, re
+s = re.sub(r'\s+', '', os.environ['RAW_SECRET']).strip('\'"')
+n = len(s)
+if n and n % 2 == 0 and s[: n // 2] == s[n // 2:]:
+    s = s[: n // 2]
+for p in ('sk_test_', 'sk_live_', 'rk_test_', 'rk_live_'):
+    i = s.find(p, 1)
+    if i > 0:
+        s = s[:i]
+print(s)
+PY
+}
+
 command -v netlify >/dev/null || { echo "The Netlify tool is not installed. Run: npm i -g netlify-cli"; exit 1; }
 command -v python3 >/dev/null || { echo "python3 is needed for this script."; exit 1; }
 
@@ -29,7 +45,10 @@ echo "You need your Stripe SECRET key (dashboard.stripe.com -> Developers -> API
 echo "Start with the TEST key (sk_test_...). You can run this again later with the live key."
 echo
 
-read -r -s -p "Stripe secret key (hidden while you paste): " KEY; echo
+read -r -s -p "Stripe secret key (hidden while you paste, paste it ONCE): " KEY; echo
+RAW="$KEY"; KEY="$(clean_secret "$KEY")"
+[ "$KEY" = "$RAW" ] || echo "  (the key was pasted more than once or had spaces, so I cleaned it up and used it once)"
+[ "${#KEY}" -lt 200 ] || { echo "That is too long for a Stripe key (they are about 107 characters). Copy it again, once."; exit 1; }
 case "$KEY" in
   sk_test_*|rk_test_*) MODE="TEST" ;;
   sk_live_*|rk_live_*) MODE="LIVE" ;;

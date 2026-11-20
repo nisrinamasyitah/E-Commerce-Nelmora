@@ -7,6 +7,22 @@ set -euo pipefail
 SITE_ID="1fa78162-420c-4071-8166-de7e6e5dd4f1"
 SITE_URL="https://nelmoramy.netlify.app"
 
+# A pasted secret sometimes arrives twice in a row (a double paste). This removes the repeat, plus stray spaces/quotes.
+clean_secret() {
+  RAW_SECRET="$1" python3 - <<'PY'
+import os, re
+s = re.sub(r'\s+', '', os.environ['RAW_SECRET']).strip('\'"')
+n = len(s)
+if n and n % 2 == 0 and s[: n // 2] == s[n // 2:]:
+    s = s[: n // 2]
+for p in ('sk_test_', 'sk_live_', 'rk_test_', 'rk_live_'):
+    i = s.find(p, 1)
+    if i > 0:
+        s = s[:i]
+print(s)
+PY
+}
+
 command -v netlify >/dev/null || { echo "The Netlify tool is not installed. Run: npm i -g netlify-cli"; exit 1; }
 
 echo
@@ -19,6 +35,8 @@ read -r -p "1) Turso database URL (starts with libsql://): " DB_URL
 case "$DB_URL" in libsql://*) ;; *) echo "That should start with libsql://  (copy it from the Turso page)."; exit 1;; esac
 
 read -r -s -p "2) Turso auth token (hidden while you paste): " DB_TOKEN; echo
+DB_RAW="$DB_TOKEN"; DB_TOKEN="$(clean_secret "$DB_TOKEN")"
+[ "$DB_TOKEN" = "$DB_RAW" ] || echo "  (the token was pasted more than once or had spaces, so I cleaned it up and used it once)"
 [ "${#DB_TOKEN}" -gt 40 ] || { echo "That token looks too short. Generate a new one in Turso and copy all of it."; exit 1; }
 
 read -r -s -p "3) Choose a password for your shop admin (10+ characters): " ADMIN_PW; echo
