@@ -4,6 +4,7 @@
 // All money is stored in sen (RM 1.00 = 100) as integers, so totals never drift.
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 const dataDir = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
 const url = process.env.TURSO_DATABASE_URL || process.env.DB_URL || `file:${path.join(dataDir, 'shop.db')}`;
@@ -102,7 +103,9 @@ const SCHEMA = [
     status TEXT NOT NULL DEFAULT 'new',
     tracking TEXT NOT NULL DEFAULT '',
     stripe_session TEXT NOT NULL DEFAULT '',
-    admin_note TEXT NOT NULL DEFAULT ''
+    admin_note TEXT NOT NULL DEFAULT '',
+    discount INTEGER NOT NULL DEFAULT 0,
+    discount_code TEXT NOT NULL DEFAULT ''
   )`,
   `CREATE TABLE IF NOT EXISTS order_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -124,7 +127,14 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS subscribers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT NOT NULL UNIQUE,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    name TEXT NOT NULL DEFAULT '',
+    phone TEXT NOT NULL DEFAULT '',
+    birthday TEXT NOT NULL DEFAULT '',   -- MM-DD
+    gender TEXT NOT NULL DEFAULT '',
+    source TEXT NOT NULL DEFAULT '',
+    code TEXT,                           -- personal welcome code
+    used_order INTEGER                   -- order that used the code (NULL = still available)
   )`,
   `CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)`,
   // rate limiting must survive across serverless instances, so it lives in the database
@@ -145,7 +155,23 @@ const DEFAULT_SETTINGS = {
   contact_email: 'hello@nelmoraparfums.com',
   instagram: 'nelmoraparfums',
   announcement: 'Free shipping in Malaysia for orders RM150 and above',
+  welcome_discount: 1000,      // welcome offer: sen off a first order (0 = offer switched off, popup hidden)
+  welcome_min_spend: 5000,     // minimum order subtotal for the welcome code, sen
 };
+
+const newOfferCode = () => {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return 'WELCOME-' + Array.from(crypto.randomBytes(6), (b) => alphabet[b % alphabet.length]).join('');
+};
+
+// Databases created before a column existed get it added here (safe to run every start).
+async function addColumns(table, cols) {
+  const have = new Set((await db.all(`PRAGMA table_info(${table})`)).map((c) => c.name));
+  for (const [name, def] of cols) {
+    if (have.has(name)) continue;
+    try { await db.run(`ALTER TABLE ${table} ADD COLUMN ${name} ${def}`); } catch (e) { if (!/duplicate column/i.test(String(e.message))) throw e; }
+  }
+}
 
 async function getSettings() {
   const out = { ...DEFAULT_SETTINGS };
@@ -187,6 +213,13 @@ const CATALOGUE = [
 
 async function init() {
   await client.batch(SCHEMA, 'write');
+  await addColumns('orders', [['discount', 'INTEGER NOT NULL DEFAULT 0'], ['discount_code', "TEXT NOT NULL DEFAULT ''"]]);
+  await addColumns('subscribers', [['name', "TEXT NOT NULL DEFAULT ''"], ['phone', "TEXT NOT NULL DEFAULT ''"], ['birthday', "TEXT NOT NULL DEFAULT ''"],
+    ['gender', "TEXT NOT NULL DEFAULT ''"], ['source', "TEXT NOT NULL DEFAULT ''"], ['code', 'TEXT'], ['used_order', 'INTEGER']]);
+  await db.run('CREATE UNIQUE INDEX IF NOT EXISTS subscribers_code ON subscribers(code)');
+  for (const s of await db.all("SELECT id FROM subscribers WHERE code IS NULL OR code = ''")) {
+    await db.run('UPDATE subscribers SET code = ? WHERE id = ?', [newOfferCode(), s.id]);
+  }
   await client.batch(
     Object.entries(DEFAULT_SETTINGS).map(([k, v]) => ({ sql: 'INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', args: [k, JSON.stringify(v)] })),
     'write',
@@ -216,4 +249,4 @@ db.ready = missingConfig
   : init().catch((e) => { console.error('Database setup failed:', e); throw e; });
 db.ready.catch(() => {}); // avoid an unhandled-rejection crash; requests will report the error
 
-module.exports = { db, url, isFile, getSettings, DEFAULT_SETTINGS, client };
+module.exports = { db, url, isFile, getSettings, DEFAULT_SETTINGS, client, newOfferCode };

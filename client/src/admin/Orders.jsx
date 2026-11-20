@@ -49,6 +49,7 @@ function OrderDetail({ id, onChanged }) {
 
       <ul className="a-items">
         {o.items.map((it) => <li key={it.id}><span>{it.qty} × {it.name} {it.size}</span><span>{rm(it.price * it.qty)}</span></li>)}
+        {o.discount > 0 && <li className="muted"><span>Discount ({o.discount_code})</span><span>−{rm(o.discount)}</span></li>}
         <li className="muted"><span>Shipping ({o.region === 'east' ? 'East' : 'West'} Malaysia)</span><span>{rm(o.shipping)}</span></li>
         <li><strong>Total</strong><strong>{rm(o.total)}</strong></li>
       </ul>

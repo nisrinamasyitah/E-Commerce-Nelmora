@@ -27,13 +27,18 @@ async function call(method, path, body) {
   return json;
 }
 
-function createCheckout({ code, email, lines, shipping, successUrl, cancelUrl }) {
+async function createCheckout({ code, email, lines, shipping, discount = 0, successUrl, cancelUrl }) {
   const items = lines.map((l) => ({
     quantity: l.qty,
     price_data: { currency: 'myr', unit_amount: l.price, product_data: { name: `${l.name} ${l.size}` } },
   }));
   if (shipping > 0) items.push({ quantity: 1, price_data: { currency: 'myr', unit_amount: shipping, product_data: { name: 'Shipping' } } });
+  // Stripe line items cannot be negative, so a discount is sent as a one-time coupon.
+  const coupon = discount > 0
+    ? await call('POST', '/coupons', { amount_off: discount, currency: 'myr', duration: 'once', name: 'Welcome offer' })
+    : null;
   return call('POST', '/checkout/sessions', {
+    ...(coupon && { discounts: [{ coupon: coupon.id }] }),
     mode: 'payment',
     customer_email: email,
     client_reference_id: code,

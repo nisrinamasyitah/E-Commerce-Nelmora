@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAdmin, useLoad } from './Admin';
 
-const MONEY = ['shipping_west', 'shipping_east', 'free_shipping_min'];
+const MONEY = ['shipping_west', 'shipping_east', 'free_shipping_min', 'welcome_discount', 'welcome_min_spend'];
 
 export default function Settings() {
   const { call, token } = useAdmin();
@@ -46,6 +46,10 @@ export default function Settings() {
         {F('shipping_west', 'Peninsular Malaysia', { type: 'number', step: '0.01', min: 0, half: true })}
         {F('shipping_east', 'Sabah, Sarawak, Labuan', { type: 'number', step: '0.01', min: 0, half: true })}
         {F('free_shipping_min', 'Free shipping from (0 = never free)', { type: 'number', step: '0.01', min: 0 })}
+
+        <h2>Welcome offer (popup, RM)</h2>
+        {F('welcome_discount', 'RM off the first order (0 = turn the offer and popup off)', { type: 'number', step: '0.01', min: 0, half: true })}
+        {F('welcome_min_spend', 'Minimum order for the offer', { type: 'number', step: '0.01', min: 0, half: true })}
 
         <h2>Bank transfer details (shown to customers)</h2>
         {F('bank_name', 'Bank', { half: true })}

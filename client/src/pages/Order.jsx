@@ -114,6 +114,7 @@ export default function Order() {
           ))}
         </ul>
         <div className="sum-row"><span>Subtotal</span><span>{rm(order.subtotal)}</span></div>
+        {order.discount > 0 && <div className="sum-row discount"><span>Discount ({order.discount_code})</span><span>−{rm(order.discount)}</span></div>}
         <div className="sum-row"><span>Shipping</span><span>{order.shipping ? rm(order.shipping) : 'Free'}</span></div>
         <div className="sum-row total"><span>Total</span><strong>{rm(order.total)}</strong></div>
         <div className="ship-to">

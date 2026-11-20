@@ -548,3 +548,43 @@ legend { font-family: var(--serif); font-size: 1.45rem; margin-bottom: 1rem; pad
   .img-alt { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+
+/* ------------------------------------------------ welcome popup */
+.welcome { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 1rem; overflow-y: auto; }
+.welcome-scrim { position: fixed; inset: 0; background: rgba(28, 21, 20, .6); animation: fadeIn .3s; }
+.welcome-card { position: relative; background: var(--paper); width: min(860px, 100%); display: grid; grid-template-columns: 1fr 1fr; border-radius: 4px; overflow: hidden; box-shadow: 0 30px 80px rgba(0, 0, 0, .35); animation: fadeUp .5s var(--ease); margin: auto; }
+.welcome-media { min-height: 100%; background: var(--stone); }
+.welcome-media img { width: 100%; height: 100%; object-fit: cover; }
+.welcome-body { padding: clamp(1.4rem, 3vw, 2.4rem); position: relative; }
+.welcome-body form { display: flex; flex-direction: column; gap: .7rem; }
+.welcome-body h2 { margin: 0; font-size: clamp(2rem, 4vw, 2.7rem); }
+.welcome-body .eyebrow { margin-bottom: .6rem; }
+.welcome-close { position: absolute; top: .8rem; right: .8rem; background: none; border: 0; font-size: 1.1rem; padding: .5rem; line-height: 1; }
+.welcome-sub { color: #4d423c; margin: 0 0 .6rem; }
+.welcome input, .welcome select { border: 1px solid var(--stone-2); background: #fff; border-radius: var(--radius); padding: .8rem .9rem; font-size: .95rem; width: 100%; min-width: 0; }
+.welcome input:focus, .welcome select:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px rgba(36, 28, 26, .07); }
+.welcome-phone { display: flex; gap: .5rem; }
+.welcome-phone span { display: grid; place-items: center; border: 1px solid var(--stone-2); background: #fff; border-radius: var(--radius); padding: 0 .8rem; font-size: .9rem; white-space: nowrap; }
+.welcome-row label { display: block; font-size: .82rem; margin-bottom: .3rem; }
+.welcome-row label em { font-style: normal; color: var(--muted); font-size: .76rem; }
+.welcome-two { display: grid; grid-template-columns: 1.4fr 1fr; gap: .5rem; }
+.welcome-fine { font-size: .72rem; color: var(--muted); margin: .2rem 0 0; line-height: 1.5; }
+.welcome-fine a { color: var(--wine); }
+.welcome-done { display: flex; flex-direction: column; gap: .8rem; padding-top: 1rem; text-align: center; }
+.welcome-done .script { margin: 0; }
+.welcome-code { display: flex; justify-content: center; align-items: center; gap: 1rem; border: 1px dashed var(--ink); background: var(--cream); padding: 1rem; }
+.welcome-code span { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 1.15rem; letter-spacing: .08em; font-weight: 600; }
+.newsletter-code { display: block; font-size: 1rem; margin-top: .6rem; font-family: var(--sans); }
+.newsletter-code strong { letter-spacing: .06em; }
+
+/* discount code at checkout */
+.promo { display: flex; gap: .6rem; align-items: center; margin: 0 0 .8rem; }
+.promo input { flex: 1; min-width: 0; border: 1px solid var(--stone-2); background: #fff; border-radius: var(--radius); padding: .7rem .8rem; font-size: .9rem; letter-spacing: .04em; }
+.promo-ok { color: var(--ok); font-size: .8rem; font-weight: 500; }
+.promo-msg { font-size: .8rem; color: var(--err); margin: -.3rem 0 .6rem; }
+.sum-row.discount { color: var(--ok); }
+
+@media (max-width: 720px) {
+  .welcome-card { grid-template-columns: 1fr; }
+  .welcome-media { display: none; }
+}

@@ -5,6 +5,7 @@ import { rm } from '../lib';
 import CartDrawer from './CartDrawer';
 import SearchOverlay from './SearchOverlay';
 import Newsletter from './Newsletter';
+import WelcomePopup from './WelcomePopup';
 
 function Wordmark({ small, light }) {
   return (
@@ -142,6 +143,7 @@ export default function Layout() {
 
       <CartDrawer />
       <SearchOverlay open={search} onClose={() => setSearch(false)} />
+      <WelcomePopup />
     </div>
   );
 }

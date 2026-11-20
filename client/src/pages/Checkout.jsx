@@ -12,13 +12,17 @@ export default function Checkout() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const [form, setForm] = useState(() => {
-    try { return { ...EMPTY, ...JSON.parse(localStorage.getItem(SAVED_KEY)) }; } catch { return EMPTY; }
+    let f = EMPTY;
+    try { f = { ...EMPTY, ...JSON.parse(localStorage.getItem(SAVED_KEY)) }; } catch { /* none saved */ }
+    try { if (!f.email) f.email = JSON.parse(localStorage.getItem('nelmora.offer'))?.email || ''; } catch { /* none */ }
+    return f;
   });
   const [method, setMethod] = useState('transfer');
   const [quote, setQuote] = useState(null);
   const [errors, setErrors] = useState({});
   const [error, setError] = useState(params.get('cancelled') ? 'Payment was cancelled. Your order was not paid; you can try again or choose bank transfer.' : '');
   const [busy, setBusy] = useState(false);
+  const [code, setCode] = useState(() => { try { return JSON.parse(localStorage.getItem('nelmora.offer'))?.code || ''; } catch { return ''; } });
 
   useEffect(() => { if (config?.stripeEnabled) setMethod('stripe'); }, [config?.stripeEnabled]);
 
@@ -26,12 +30,14 @@ export default function Checkout() {
   useEffect(() => {
     if (!cart.length) { setQuote(null); return; }
     let live = true;
-    api('/quote', { method: 'POST', body: { items: cart.map(({ variantId, qty }) => ({ variantId, qty })), state: form.state } })
-      .then((q) => live && setQuote(q))
-      .catch(() => live && setError('Could not check prices. Please refresh.'));
-    return () => { live = false; };
+    const t = setTimeout(() => {
+      api('/quote', { method: 'POST', body: { items: cart.map(({ variantId, qty }) => ({ variantId, qty })), state: form.state, code: code.trim(), email: form.email } })
+        .then((q) => live && setQuote(q))
+        .catch(() => live && setError('Could not check prices. Please refresh.'));
+    }, 350);
+    return () => { live = false; clearTimeout(t); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [itemsKey, form.state]);
+  }, [itemsKey, form.state, form.email, code]);
 
   const set = (k) => (e) => { setForm((f) => ({ ...f, [k]: e.target.value })); setErrors((er) => ({ ...er, [k]: undefined })); };
 
@@ -43,9 +49,10 @@ export default function Checkout() {
       try { localStorage.setItem(SAVED_KEY, JSON.stringify({ ...form, note: '' })); } catch { /* ignore */ }
       const res = await api('/orders', {
         method: 'POST',
-        body: { customer: form, items: cart.map(({ variantId, qty }) => ({ variantId, qty })), paymentMethod: method },
+        body: { customer: form, items: cart.map(({ variantId, qty }) => ({ variantId, qty })), paymentMethod: method, code: code.trim() },
       });
       clear();
+      if (quote?.discount > 0) { try { localStorage.removeItem('nelmora.offer'); } catch { /* ignore */ } }
       if (res.redirect) { window.location.href = res.redirect; return; }
       navigate(`/order/${res.code}?t=${res.token}&new=1`);
     } catch (err) {
@@ -154,7 +161,13 @@ export default function Checkout() {
               </li>
             ))}
           </ul>
+          <div className="promo">
+            <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="Discount code" aria-label="Discount code" autoCapitalize="characters" spellCheck="false" />
+            {quote?.discount > 0 && <span className="promo-ok">Applied</span>}
+          </div>
+          {code.trim() && quote?.codeMessage && <p className="promo-msg">{quote.codeMessage}</p>}
           <div className="sum-row"><span>Subtotal</span><span>{rm(quote?.subtotal)}</span></div>
+          {quote?.discount > 0 && <div className="sum-row discount"><span>Discount ({quote.discountCode})</span><span>−{rm(quote.discount)}</span></div>}
           <div className="sum-row"><span>Shipping</span><span>{!form.state ? <span className="muted">Choose state</span> : quote?.shipping === 0 ? 'Free' : rm(quote?.shipping)}</span></div>
           <div className="sum-row total"><span>Total</span><strong>{rm(quote?.total)}</strong></div>
         </aside>

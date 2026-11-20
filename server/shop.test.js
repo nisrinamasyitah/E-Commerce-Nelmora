@@ -170,3 +170,72 @@ test('admin: edit stock, product and settings; brute force is limited', async ()
   for (let i = 0; i < 5; i++) await req('POST', '/api/admin/login', { password: 'wrong' });
   assert.equal((await req('POST', '/api/admin/login', { password: 'wrong' })).status, 429);
 });
+
+// ---- welcome offer ----
+test('welcome offer: signup gives a personal code, same email gets the same code', async () => {
+  const a = await req('POST', '/api/subscribe', { name: 'Aisyah', email: 'Aisyah@Example.com', phone: '012-345 6789', month: 5, day: 17, gender: 'Women' });
+  assert.equal(a.status, 200, JSON.stringify(a.body));
+  assert.match(a.body.code, /^WELCOME-[A-Z0-9]{6}$/);
+  assert.equal(a.body.amount, 1000);
+  const again = await req('POST', '/api/subscribe', { email: 'aisyah@example.com' });
+  assert.equal(again.body.code, a.body.code);
+  assert.equal((await req('POST', '/api/subscribe', { email: 'not-an-email' })).status, 400);
+  assert.equal((await req('POST', '/api/subscribe', { email: 'x@example.com', phone: '123' })).status, 400);
+  const list = (await req('GET', '/api/admin/subscribers', null, true)).body.find((s) => s.email === 'aisyah@example.com');
+  assert.equal(list.birthday, '05-17');
+  assert.equal(list.name, 'Aisyah');
+  assert.equal(list.gender, 'Women');
+});
+
+test('welcome offer: discount rules at quote time', async () => {
+  const code = (await req('POST', '/api/subscribe', { email: 'rules@example.com' })).body.code;
+  const products = (await req('GET', '/api/products')).body;
+  const v30 = products.find((p) => p.slug === 'elara').variants.find((v) => v.size === '30ml');
+  const v10 = products.find((p) => p.slug === 'elara').variants.find((v) => v.size === '10ml');
+  const quoteWith = (items, email, c = code) => req('POST', '/api/quote', { items, state: 'Selangor', code: c, email }).then((r) => r.body);
+
+  const ok = await quoteWith([{ variantId: v30.id, qty: 1 }], 'rules@example.com');
+  assert.equal(ok.discount, 1000);
+  assert.equal(ok.total, 6500 - 1000 + 800);
+  assert.equal(ok.codeMessage, '');
+  assert.match((await quoteWith([{ variantId: v30.id, qty: 1 }], 'someone@else.com')).codeMessage, /email you signed up with/);
+  assert.match((await quoteWith([{ variantId: v30.id, qty: 1 }], '')).codeMessage, /Enter the email/);
+  const small = await quoteWith([{ variantId: v10.id, qty: 1 }], 'rules@example.com');
+  assert.equal(small.discount, 0);
+  assert.match(small.codeMessage, /Spend RM50/);
+  assert.match((await quoteWith([{ variantId: v30.id, qty: 1 }], 'rules@example.com', 'WELCOME-NOPE00')).codeMessage, /not valid/);
+});
+
+test('welcome offer: used once, freed when the order is cancelled', async () => {
+  const code = (await req('POST', '/api/subscribe', { email: customer.email })).body.code;
+  const products = (await req('GET', '/api/products')).body;
+  const v30 = products.find((p) => p.slug === 'valentus').variants.find((v) => v.size === '30ml');
+  const order = (extra = {}) => req('POST', '/api/orders', { customer, items: [{ variantId: v30.id, qty: 1 }], paymentMethod: 'transfer', code, ...extra });
+
+  const first = await order();
+  assert.equal(first.status, 200, JSON.stringify(first.body));
+  const o = (await req('GET', `/api/orders/${first.body.code}?t=${first.body.token}`)).body;
+  assert.equal(o.discount, 1000);
+  assert.equal(o.discount_code, code);
+  assert.equal(o.total, 6500 - 1000 + 800);
+
+  const second = await order();
+  assert.equal(second.status, 400);
+  assert.match(second.body.error, /already been used/);
+
+  const id = (await req('GET', '/api/admin/orders', null, true)).body.find((x) => x.code === first.body.code).id;
+  await req('PATCH', `/api/admin/orders/${id}`, { status: 'cancelled' }, true);
+  const third = await order();
+  assert.equal(third.status, 200, JSON.stringify(third.body));
+  // a code can never be applied to someone else's email
+  const other = await req('POST', '/api/orders', { customer: { ...customer, email: 'thief@example.com' }, items: [{ variantId: v30.id, qty: 1 }], code });
+  assert.equal(other.status, 400);
+});
+
+test('welcome offer: can be switched off in settings', async () => {
+  await req('PUT', '/api/admin/settings', { welcome_discount: 0 }, true);
+  assert.equal((await req('GET', '/api/config')).body.welcome.amount, 0);
+  const r = await req('POST', '/api/subscribe', { email: 'off@example.com' });
+  assert.equal(r.body.code, null);
+  await req('PUT', '/api/admin/settings', { welcome_discount: 1000 }, true);
+});

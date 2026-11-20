@@ -7,7 +7,7 @@ const crypto = require('crypto');
 try { process.loadEnvFile(path.join(__dirname, '..', '.env')); } catch { /* .env is optional */ }
 
 const express = require('express');
-const { db, getSettings, DEFAULT_SETTINGS } = require('./db');
+const { db, getSettings, DEFAULT_SETTINGS, newOfferCode } = require('./db');
 const { STATES, quote, validateCustomer, clean } = require('./shop');
 const stripe = require('./stripe');
 const storage = require('./storage');
@@ -57,6 +57,23 @@ const publicProduct = (p) => ({
   variants: p.variants.map(({ stock, ...v }) => ({ ...v, inStock: stock > 0, lowStock: stock > 0 && stock <= 3 })),
 });
 
+const rmText = (sen) => 'RM' + (Number.isInteger(sen / 100) ? sen / 100 : (sen / 100).toFixed(2));
+
+/** Check a welcome code for a cart. Returns { discount, code } when valid, or { error } with a customer-friendly reason. */
+async function checkCode(r, rawCode, email, subtotal, s) {
+  const code = clean(rawCode, 40).toUpperCase();
+  if (!code) return { discount: 0 };
+  if (!s.welcome_discount) return { error: 'This offer is no longer available.' };
+  const sub = await r.get('SELECT email, used_order FROM subscribers WHERE code = ?', [code]);
+  if (!sub) return { error: 'That code is not valid.' };
+  if (sub.used_order) return { error: 'This code has already been used.' };
+  const mail = clean(email, 160).toLowerCase();
+  if (!mail) return { error: 'Enter the email you signed up with to use this code.' };
+  if (mail !== sub.email) return { error: 'Use the email you signed up with for this code.' };
+  if (subtotal < s.welcome_min_spend) return { error: `Spend ${rmText(s.welcome_min_spend)} or more to use this code.` };
+  return { discount: Math.min(s.welcome_discount, subtotal), code };
+}
+
 async function newCode(r) {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   for (;;) {
@@ -77,6 +94,7 @@ const publicOrder = (o) => {
 };
 
 async function restock(t, orderId) {
+  await t.run('UPDATE subscribers SET used_order = NULL WHERE used_order = ?', [orderId]); // cancelled order frees the welcome code
   for (const it of await t.all('SELECT variant_id, qty FROM order_items WHERE order_id = ?', [orderId])) {
     if (it.variant_id) await t.run('UPDATE variants SET stock = stock + ? WHERE id = ?', [it.qty, it.variant_id]);
   }
@@ -89,6 +107,8 @@ async function unstock(t, orderId) {
     if (!v || v.stock < it.qty) throw fail(409, `Not enough stock of ${it.name} ${it.size} to reopen this order.`);
   }
   for (const it of items) await t.run('UPDATE variants SET stock = stock - ? WHERE id = ?', [it.qty, it.variant_id]);
+  const o = await t.get('SELECT discount_code FROM orders WHERE id = ?', [orderId]);
+  if (o?.discount_code) await t.run('UPDATE subscribers SET used_order = ? WHERE code = ? AND used_order IS NULL', [orderId, o.discount_code]);
 }
 
 async function markPaid(code, sessionId) {
@@ -150,6 +170,7 @@ app.get('/api/config', async (_req, res) => {
     shipping: { west: s.shipping_west, east: s.shipping_east, freeMin: s.free_shipping_min },
     bank: { name: s.bank_name, accountName: s.bank_account_name, accountNo: s.bank_account_no },
     whatsapp: s.whatsapp, email: s.contact_email, instagram: s.instagram, announcement: s.announcement,
+    welcome: { amount: s.welcome_discount, minSpend: s.welcome_min_spend },
     stripeEnabled: stripe.enabled,
   });
 });
@@ -166,7 +187,10 @@ app.get('/api/products/:slug', async (req, res) => {
 });
 
 app.post('/api/quote', async (req, res) => {
-  res.json(quote(req.body.items, req.body.state, await getSettings(), await variantFinder(db, req.body.items)));
+  const s = await getSettings();
+  const q = quote(req.body.items, req.body.state, s, await variantFinder(db, req.body.items));
+  const d = await checkCode(db, req.body.code, req.body.email, q.subtotal, s);
+  res.json({ ...q, discount: d.discount || 0, discountCode: d.code || '', codeMessage: d.error || '', total: q.total - (d.discount || 0) });
 });
 
 app.post('/api/orders', async (req, res) => {
@@ -182,13 +206,22 @@ app.post('/api/orders', async (req, res) => {
       const q = quote(req.body.items, customer.state, s, await variantFinder(t, req.body.items));
       if (!q.lines.length) throw fail(400, 'Your bag is empty.');
       if (q.problems.length) throw Object.assign(fail(409, 'Some items in your bag changed. Please review it.'), { problems: q.problems });
+      const d = await checkCode(t, req.body.code, customer.email, q.subtotal, s);
+      if (d.error) throw fail(400, d.error);
+      const discount = d.discount || 0;
+      q.discount = discount;
+      q.total -= discount;
       const code = await newCode(t);
       const token = crypto.randomBytes(16).toString('hex');
       const { lastInsertRowid: orderId } = await t.run(`INSERT INTO orders
-        (code, token, name, email, phone, address1, address2, postcode, city, state, region, note, subtotal, shipping, total, payment_method)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (code, token, name, email, phone, address1, address2, postcode, city, state, region, note, subtotal, shipping, total, payment_method, discount, discount_code)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [code, token, customer.name, customer.email, customer.phone, customer.address1, customer.address2, customer.postcode,
-        customer.city, customer.state, q.region, customer.note, q.subtotal, q.shipping, q.total, method]);
+        customer.city, customer.state, q.region, customer.note, q.subtotal, q.shipping, q.total, method, discount, d.code || '']);
+      if (d.code) { // claim the code; fails if someone used it a moment ago
+        const claimed = await t.run('UPDATE subscribers SET used_order = ? WHERE code = ? AND used_order IS NULL', [orderId, d.code]);
+        if (!claimed.changes) throw fail(400, 'This code has already been used.');
+      }
       for (const l of q.lines) {
         const r = await t.run('UPDATE variants SET stock = stock - ? WHERE id = ? AND stock >= ?', [l.qty, l.variantId, l.qty]);
         if (!r.changes) throw fail(409, `${l.name} ${l.size} just sold out.`);
@@ -208,7 +241,7 @@ app.post('/api/orders', async (req, res) => {
   if (method === 'stripe') {
     try {
       const session = await stripe.createCheckout({
-        code, email: customer.email, lines: q.lines, shipping: q.shipping,
+        code, email: customer.email, lines: q.lines, shipping: q.shipping, discount: q.discount || 0,
         successUrl: `${orderUrl}&paid=1`, cancelUrl: `${base}/checkout?cancelled=${code}`,
       });
       await db.run('UPDATE orders SET stripe_session = ? WHERE id = ?', [session.id, orderId]);
@@ -250,14 +283,40 @@ app.post('/api/contact', async (req, res) => {
   res.json({ ok: true });
 });
 
+const GENDERS = ['Women', 'Men', 'Prefer not to say'];
 app.post('/api/subscribe', async (req, res) => {
   const key = `subscribe:${clientIp(req)}`;
   if (await blocked(key, 10, 3600_000)) return res.status(429).json({ error: 'Too many attempts. Please try again later.' });
-  const email = clean(req.body.email, 160).toLowerCase();
+  const b = req.body || {};
+  const email = clean(b.email, 160).toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Please enter a valid email.' });
+  const name = clean(b.name, 60);
+  const phone = clean(b.phone, 30).replace(/[^\d+]/g, '');
+  if (phone && phone.replace(/\D/g, '').length < 9) return res.status(400).json({ error: 'Please enter a valid phone number, or leave it empty.' });
+  const month = Math.round(Number(b.month)), day = Math.round(Number(b.day));
+  const birthday = month >= 1 && month <= 12 && day >= 1 && day <= 31 ? `${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}` : '';
+  const gender = GENDERS.includes(b.gender) ? b.gender : '';
   await hit(key);
-  await db.run('INSERT OR IGNORE INTO subscribers (email) VALUES (?)', [email]);
-  res.json({ ok: true });
+
+  const s = await getSettings();
+  let sub = await db.get('SELECT * FROM subscribers WHERE email = ?', [email]);
+  if (sub) { // already on the list: only fill in details they had not given before
+    await db.run(`UPDATE subscribers SET name = CASE WHEN name = '' THEN ? ELSE name END, phone = CASE WHEN phone = '' THEN ? ELSE phone END,
+      birthday = CASE WHEN birthday = '' THEN ? ELSE birthday END, gender = CASE WHEN gender = '' THEN ? ELSE gender END WHERE id = ?`,
+    [name, phone, birthday, gender, sub.id]);
+  } else {
+    await db.run('INSERT OR IGNORE INTO subscribers (email, name, phone, birthday, gender, source, code) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [email, name, phone, birthday, gender, clean(b.source, 20), newOfferCode()]);
+    sub = await db.get('SELECT * FROM subscribers WHERE email = ?', [email]);
+  }
+  const offer = s.welcome_discount > 0;
+  res.json({
+    ok: true,
+    code: offer && !sub.used_order ? sub.code : null,
+    used: offer && !!sub.used_order,
+    amount: s.welcome_discount,
+    minSpend: s.welcome_min_spend,
+  });
 });
 
 // Product photos uploaded from the admin
@@ -321,7 +380,7 @@ app.get('/api/admin/orders', async (req, res) => {
 app.get('/api/admin/orders.csv', async (_req, res) => {
   const rows = await db.all(`SELECT o.code, datetime(o.created_at,'+8 hours') created_myt, o.name, o.email, o.phone, o.address1, o.address2,
     o.postcode, o.city, o.state, o.status, o.payment_method, o.payment_status, o.subtotal/100.0 subtotal, o.shipping/100.0 shipping,
-    o.total/100.0 total, o.tracking, (SELECT GROUP_CONCAT(name || ' ' || size || ' x' || qty, '; ') FROM order_items WHERE order_id = o.id) items
+    o.discount/100.0 discount, o.discount_code, o.total/100.0 total, o.tracking, (SELECT GROUP_CONCAT(name || ' ' || size || ' x' || qty, '; ') FROM order_items WHERE order_id = o.id) items
     FROM orders o ORDER BY o.id`);
   const cols = rows[0] ? Object.keys(rows[0]) : ['code'];
   const esc = (v) => { const s = String(v ?? ''); return /[",\n]/.test(s) || /^[=+\-@]/.test(s) ? `"${(/^[=+\-@]/.test(s) ? "'" : '') + s.replace(/"/g, '""')}"` : s; };
@@ -435,7 +494,7 @@ app.put('/api/admin/settings', async (req, res) => {
   res.json(await getSettings());
 });
 
-app.get('/api/admin/subscribers', async (_req, res) => res.json(await db.all('SELECT * FROM subscribers ORDER BY id DESC')));
+app.get('/api/admin/subscribers', async (_req, res) => res.json(await db.all('SELECT id, email, name, phone, birthday, gender, source, code, used_order, created_at FROM subscribers ORDER BY id DESC')));
 app.delete('/api/admin/subscribers/:id', async (req, res) => {
   await db.run('DELETE FROM subscribers WHERE id = ?', [req.params.id]);
   res.json({ ok: true });
