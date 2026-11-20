@@ -591,13 +591,22 @@ legend { font-family: var(--serif); font-size: 1.45rem; margin-bottom: 1rem; pad
   .welcome-media { display: none; }
 }
 
-/* ------------------------------------------------ floating WhatsApp button (brand colours) */
-.wa-float { position: fixed; right: clamp(14px, 2.5vw, 28px); bottom: clamp(14px, 2.5vw, 28px); z-index: 26; width: 58px; height: 58px; border-radius: 50%;
+/* ------------------------------------------------ bottom-right corner: sale tag + WhatsApp button (brand colours) */
+.fab { position: fixed; right: clamp(14px, 2.5vw, 28px); bottom: clamp(14px, 2.5vw, 28px); z-index: 26; display: flex; flex-direction: column; align-items: flex-end; gap: .85rem; transition: bottom .35s var(--ease); }
+.wa-float { position: relative; width: 58px; height: 58px; border-radius: 50%;
   display: grid; place-items: center; background: var(--wine); color: var(--champagne); text-decoration: none;
   border: 1.5px solid rgba(232, 210, 173, .7); box-shadow: 0 8px 24px rgba(28, 21, 20, .32), inset 0 0 0 3px rgba(28, 21, 20, .12);
-  transition: transform .25s var(--ease), box-shadow .25s, background .25s, color .25s, bottom .35s var(--ease); }
+  transition: transform .25s var(--ease), box-shadow .25s, background .25s, color .25s; }
 .wa-float:hover { transform: scale(1.08); background: var(--ink); color: var(--cream); box-shadow: 0 12px 30px rgba(28, 21, 20, .4); }
 .wa-float::after { content: ''; position: absolute; inset: -1.5px; border-radius: 50%; border: 1.5px solid var(--gold); animation: waPulse 2.8s ease-out infinite; pointer-events: none; }
+.sale-tag { position: relative; display: flex; flex-direction: column; align-items: center; line-height: 1.1; cursor: pointer; font-family: var(--sans);
+  background: var(--champagne); color: var(--wine); border: 1.5px solid var(--gold); border-radius: 14px; padding: .5rem .85rem .55rem; margin-right: -2px;
+  box-shadow: 0 8px 22px rgba(28, 21, 20, .3); animation: saleBob 3.2s ease-in-out infinite; transition: background .2s; }
+.sale-tag:hover { background: #f1e0c3; }
+.sale-tag::after { content: ''; position: absolute; bottom: -7px; right: 24px; width: 12px; height: 12px; background: inherit; border-right: 1.5px solid var(--gold); border-bottom: 1.5px solid var(--gold); transform: rotate(45deg); }
+.sale-tag-top { font-size: .56rem; letter-spacing: .3em; margin-right: -.3em; text-transform: uppercase; font-weight: 600; }
+.sale-tag strong { font-family: var(--serif); font-size: 1.05rem; font-weight: 700; letter-spacing: .03em; white-space: nowrap; }
+@keyframes saleBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 @keyframes waPulse { from { transform: scale(1); opacity: .75; } to { transform: scale(1.45); opacity: 0; } }
-.wa-float.lift { bottom: 84px; }   /* stays clear of the sticky "Add to bag" bar on product pages */
-@media (max-width: 600px) { .wa-float { width: 52px; height: 52px; } .wa-float.lift { bottom: 80px; } }
+.fab.lift { bottom: 84px; }   /* stays clear of the sticky "Add to bag" bar on product pages */
+@media (max-width: 600px) { .wa-float { width: 52px; height: 52px; } .fab.lift { bottom: 80px; } .sale-tag { padding: .4rem .7rem .45rem; } .sale-tag strong { font-size: .95rem; } }

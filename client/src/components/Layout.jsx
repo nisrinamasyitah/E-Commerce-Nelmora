@@ -145,7 +145,8 @@ export default function Layout() {
       <CartDrawer />
       <SearchOverlay open={search} onClose={() => setSearch(false)} />
       <WelcomePopup />
-      <WhatsAppFloat number={config?.whatsapp} lift={pathname.startsWith('/shop/')} />
+      <WhatsAppFloat number={config?.whatsapp} lift={pathname.startsWith('/shop/')}
+        offer={pathname.startsWith('/checkout') || pathname.startsWith('/order') ? 0 : config?.welcome?.amount} />
     </div>
   );
 }

@@ -11,6 +11,8 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 
 const read = () => { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } };
 const write = (state) => { try { localStorage.setItem(KEY, JSON.stringify({ state, at: Date.now() })); } catch { /* private mode */ } };
+// called once someone has signed up (popup or footer box): never show the popup or the sale tag again
+export const markWelcomeDone = () => { write('done'); window.dispatchEvent(new Event('nelmora:welcome-done')); };
 
 export default function WelcomePopup() {
   const { config } = useStore();
@@ -24,6 +26,13 @@ export default function WelcomePopup() {
   const first = useRef(null);
   const amount = config?.welcome?.amount || 0;
   const quiet = pathname.startsWith('/checkout') || pathname.startsWith('/order');
+
+  // the sale tag next to the WhatsApp button opens the popup on request
+  useEffect(() => {
+    const show = () => { setResult(null); setOpen(true); };
+    window.addEventListener('nelmora:open-welcome', show);
+    return () => window.removeEventListener('nelmora:open-welcome', show);
+  }, []);
 
   // Load the photo in the background so it is already there when the popup opens
   useEffect(() => { if (amount) new Image().src = '/images/products/aura.jpg'; }, [amount]);
@@ -59,7 +68,7 @@ export default function WelcomePopup() {
     setBusy(true); setError('');
     try {
       const r = await api('/subscribe', { method: 'POST', body: { ...form, source: 'popup' } });
-      write('done');
+      markWelcomeDone();
       if (r.code) { try { localStorage.setItem(OFFER_KEY, JSON.stringify({ code: r.code, email: form.email.trim().toLowerCase() })); } catch { /* ignore */ } }
       setResult(r);
     } catch (err) { setError(err.message); }

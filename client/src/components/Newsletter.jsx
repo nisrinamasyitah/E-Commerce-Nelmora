@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { api, rm } from '../lib';
-import { OFFER_KEY } from './WelcomePopup';
+import { OFFER_KEY, markWelcomeDone } from './WelcomePopup';
 import { useStore } from '../store';
 
 export default function Newsletter() {
@@ -15,6 +15,7 @@ export default function Newsletter() {
     try {
       const r = await api('/subscribe', { method: 'POST', body: { email, source: 'footer' } });
       if (r.code) { try { localStorage.setItem(OFFER_KEY, JSON.stringify({ code: r.code, email: email.trim().toLowerCase() })); } catch { /* ignore */ } }
+      markWelcomeDone();
       setState({ busy: false, done: r, error: '' });
       setEmail('');
     } catch (err) { setState({ busy: false, done: null, error: err.message }); }
