@@ -151,7 +151,7 @@ const DEFAULT_SETTINGS = {
   bank_name: 'Maybank',
   bank_account_name: 'NELMORA PARFUMS',
   bank_account_no: '0000 0000 0000',
-  whatsapp: '60123456789',     // international format, digits only
+  whatsapp: '60176304903',     // international format, digits only
   contact_email: 'hello@nelmoraparfums.com',
   instagram: 'nelmoraparfums',
   announcement: 'Free shipping in Malaysia for orders RM150 and above',

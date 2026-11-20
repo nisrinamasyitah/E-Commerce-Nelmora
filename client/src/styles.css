@@ -588,3 +588,13 @@ legend { font-family: var(--serif); font-size: 1.45rem; margin-bottom: 1rem; pad
   .welcome-card { grid-template-columns: 1fr; }
   .welcome-media { display: none; }
 }
+
+/* ------------------------------------------------ floating WhatsApp button */
+.wa-float { position: fixed; right: clamp(14px, 2.5vw, 28px); bottom: clamp(14px, 2.5vw, 28px); z-index: 26; width: 58px; height: 58px; border-radius: 50%;
+  display: grid; place-items: center; background: #25d366; color: #fff; text-decoration: none; box-shadow: 0 8px 24px rgba(0, 0, 0, .28);
+  transition: transform .25s var(--ease), box-shadow .25s, bottom .35s var(--ease); }
+.wa-float:hover { transform: scale(1.08); box-shadow: 0 12px 30px rgba(0, 0, 0, .34); }
+.wa-float::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 2px solid #25d366; animation: waPulse 2.6s ease-out infinite; }
+@keyframes waPulse { from { transform: scale(1); opacity: .7; } to { transform: scale(1.5); opacity: 0; } }
+.wa-float.lift { bottom: 84px; }   /* stays clear of the sticky "Add to bag" bar on product pages */
+@media (max-width: 600px) { .wa-float { width: 52px; height: 52px; } .wa-float.lift { bottom: 80px; } }

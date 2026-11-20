@@ -6,6 +6,7 @@ import CartDrawer from './CartDrawer';
 import SearchOverlay from './SearchOverlay';
 import Newsletter from './Newsletter';
 import WelcomePopup from './WelcomePopup';
+import WhatsAppFloat from './WhatsAppFloat';
 
 function Wordmark({ small, light }) {
   return (
@@ -144,6 +145,7 @@ export default function Layout() {
       <CartDrawer />
       <SearchOverlay open={search} onClose={() => setSearch(false)} />
       <WelcomePopup />
+      <WhatsAppFloat number={config?.whatsapp} lift={pathname.startsWith('/shop/')} />
     </div>
   );
 }
