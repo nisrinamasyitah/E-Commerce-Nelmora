@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAdmin, useLoad } from './Admin';
 
+const LOGOS = [['visa', 'Visa'], ['mastercard', 'Mastercard'], ['amex', 'American Express'], ['applepay', 'Apple Pay'], ['googlepay', 'Google Pay'], ['fpx', 'FPX'], ['duitnow', 'DuitNow'], ['grabpay', 'GrabPay']];
 const MONEY = ['shipping_west', 'shipping_east', 'free_shipping_min', 'welcome_discount', 'welcome_min_spend'];
 
 export default function Settings() {
@@ -50,6 +51,23 @@ export default function Settings() {
         <h2>Welcome offer (popup, RM)</h2>
         {F('welcome_discount', 'RM off the first order (0 = turn the offer and popup off)', { type: 'number', step: '0.01', min: 0, half: true })}
         {F('welcome_min_spend', 'Minimum order for the offer', { type: 'number', step: '0.01', min: 0, half: true })}
+
+        <h2>Payment logos shown on the website</h2>
+        <p className="muted small full">Only tick what you can really accept. <b>DuitNow</b> works now (bank transfer). The others only appear once online payment (Stripe) is switched on, and each one must also be enabled in your Stripe dashboard (FPX and GrabPay are off by default there).</p>
+        <div className="logo-picks">
+          {LOGOS.map(([k, label]) => {
+            const on = String(form.payment_logos || '').split(',').includes(k);
+            return (
+              <label key={k} className="check">
+                <input type="checkbox" checked={on} onChange={(e) => {
+                  const set = new Set(String(form.payment_logos || '').split(',').filter(Boolean));
+                  if (e.target.checked) set.add(k); else set.delete(k);
+                  setForm({ ...form, payment_logos: LOGOS.map(([x]) => x).filter((x) => set.has(x)).join(',') });
+                }} /> {label}
+              </label>
+            );
+          })}
+        </div>
 
         <h2>Bank transfer details (shown to customers)</h2>
         {F('bank_name', 'Bank', { half: true })}

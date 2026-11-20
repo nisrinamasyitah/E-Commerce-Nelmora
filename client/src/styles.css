@@ -261,7 +261,7 @@ p { margin: 0 0 1em; }
 .footer-blurb { margin-top: 1.2rem; max-width: 34ch; font-size: .9rem; font-weight: 300; }
 .socials { display: flex; gap: 1.4rem; }
 .socials a { font-size: .68rem !important; letter-spacing: .2em; text-transform: uppercase; border-bottom: 1px solid rgba(246, 240, 230, .3); padding-bottom: 2px; }
-.footer-base { border-top: 1px solid rgba(246, 240, 230, .12); margin-top: 4rem; padding-top: 1.5rem; padding-bottom: 1.8rem; font-size: .78rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.footer-base { border-top: 1px solid rgba(246, 240, 230, .12); margin-top: 4rem; padding-top: 1.5rem; padding-bottom: 6.5rem; /* clears the floating WhatsApp button */ font-size: .78rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
 .pay-marks { list-style: none; display: flex; flex-wrap: wrap; gap: .4rem; margin: 0; padding: 0; }
 .pay-marks li { border: 1px solid rgba(246, 240, 230, .25); border-radius: 3px; padding: .25rem .55rem; font-size: .66rem; letter-spacing: .08em; font-weight: 500; }
 .pay-marks.dark li { border-color: var(--stone-2); color: var(--muted); }
@@ -603,6 +603,8 @@ legend { font-family: var(--serif); font-size: 1.45rem; margin-bottom: 1rem; pad
   background: var(--champagne); color: var(--wine); border: 1.5px solid var(--gold); border-radius: 14px; padding: .5rem .85rem .55rem; margin-right: -2px;
   box-shadow: 0 8px 22px rgba(28, 21, 20, .3); animation: saleBob 3.2s ease-in-out infinite; transition: background .2s; }
 .sale-tag:hover { background: #f1e0c3; }
+.sale-tag { transition: background .2s, opacity .3s, visibility .3s; }
+.fab.atfooter .sale-tag { opacity: 0; visibility: hidden; pointer-events: none; }
 .sale-tag::after { content: ''; position: absolute; bottom: -7px; right: 24px; width: 12px; height: 12px; background: inherit; border-right: 1.5px solid var(--gold); border-bottom: 1.5px solid var(--gold); transform: rotate(45deg); }
 .sale-tag-top { font-size: .56rem; letter-spacing: .3em; margin-right: -.3em; text-transform: uppercase; font-weight: 600; }
 .sale-tag strong { font-family: var(--serif); font-size: 1.05rem; font-weight: 700; letter-spacing: .03em; white-space: nowrap; }
@@ -610,3 +612,14 @@ legend { font-family: var(--serif); font-size: 1.45rem; margin-bottom: 1rem; pad
 @keyframes waPulse { from { transform: scale(1); opacity: .75; } to { transform: scale(1.45); opacity: 0; } }
 .fab.lift { bottom: 84px; }   /* stays clear of the sticky "Add to bag" bar on product pages */
 @media (max-width: 600px) { .wa-float { width: 52px; height: 52px; } .fab.lift { bottom: 80px; } .sale-tag { padding: .4rem .7rem .45rem; } .sale-tag strong { font-size: .95rem; } }
+
+/* ------------------------------------------------ "We accept" payment logos */
+.pay-accept { display: flex; align-items: center; gap: .9rem; flex-wrap: wrap; }
+.pay-accept > span { font-size: .66rem; letter-spacing: .24em; text-transform: uppercase; font-weight: 600; color: rgba(246, 240, 230, .72); white-space: nowrap; }
+.pay-accept.dark { margin-top: 1rem; } .pay-accept.dark > span { color: var(--muted); }
+.pay-logos { list-style: none; display: flex; flex-wrap: wrap; gap: .4rem; margin: 0; padding: 0; }
+.pay-logo { width: 50px; height: 32px; border-radius: 6px; border: 1px solid #e3d9ca; overflow: hidden; display: block; flex-shrink: 0; }
+.pay-text { font-size: .8rem; color: inherit; opacity: .8; }
+.footer-base .pay-accept { justify-content: flex-end; }
+.pdp-pay .pay-logos { justify-content: flex-end; }
+@media (max-width: 600px) { .pay-logo { width: 46px; height: 29px; } .footer-base .pay-accept { justify-content: flex-start; } }

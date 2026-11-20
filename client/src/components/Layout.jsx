@@ -7,6 +7,7 @@ import SearchOverlay from './SearchOverlay';
 import Newsletter from './Newsletter';
 import WelcomePopup from './WelcomePopup';
 import WhatsAppFloat from './WhatsAppFloat';
+import PaymentLogos from './PaymentLogos';
 
 function Wordmark({ small, light }) {
   return (
@@ -39,8 +40,6 @@ function Announcement({ config }) {
   return <div className="announce" aria-live="polite"><span key={i} className="announce-msg">{messages[i % messages.length]}</span></div>;
 }
 
-export const PAYMENTS = ['FPX', 'Visa', 'Mastercard', 'GrabPay', 'DuitNow'];
-
 export default function Layout() {
   const { config, count, setBagOpen, loadError, reload } = useStore();
   const [menu, setMenu] = useState(false);
@@ -59,7 +58,6 @@ export default function Layout() {
   }, []);
 
   const active = (cond) => () => (cond ? 'active' : '');
-  const payments = config?.stripeEnabled ? PAYMENTS : ['Bank transfer', 'DuitNow'];
 
   return (
     <div className="site">
@@ -138,7 +136,7 @@ export default function Layout() {
         <div className="container footer-base">
           <span>© {new Date().getFullYear()} Nelmora Parfums. All rights reserved.</span>
           <span className="footer-ship">{config?.shipping.freeMin ? `Complimentary shipping in Malaysia on orders ${rm(config.shipping.freeMin)}+` : 'Shipping across Malaysia'}</span>
-          <ul className="pay-marks" aria-label="Accepted payment methods">{payments.map((p) => <li key={p}>{p}</li>)}</ul>
+          <div className="pay-accept"><span>We accept</span><PaymentLogos methods={config?.paymentLogos} /></div>
         </div>
       </footer>
 

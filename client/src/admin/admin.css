@@ -97,3 +97,7 @@
   .a-side-foot { margin: 0 0 0 auto; flex-direction: row; }
   .img-field { width: 100%; }
 }
+
+.logo-picks { display: flex; flex-wrap: wrap; gap: .6rem 1.4rem; width: 100%; }
+.logo-picks .check { width: auto; }
+.a-form .full { width: 100%; margin: -.2rem 0 .2rem; }

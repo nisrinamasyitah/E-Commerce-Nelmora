@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useStore } from '../store';
 import { rm, notesList, useTitle } from '../lib';
-import { PAYMENTS } from '../components/Layout';
+import PaymentLogos from '../components/PaymentLogos';
 import QtyInput from '../components/QtyInput';
 import ProductCard from '../components/ProductCard';
 import NotFound from './NotFound';
@@ -116,7 +116,7 @@ export default function Product() {
             </details>
             <div className="pdp-pay">
               <span className="muted small">Secure payment</span>
-              <ul className="pay-marks dark">{(config?.stripeEnabled ? PAYMENTS : ['Bank transfer', 'DuitNow']).map((p) => <li key={p}>{p}</li>)}</ul>
+              <PaymentLogos methods={config?.paymentLogos} />
             </div>
           </div>
         </div>

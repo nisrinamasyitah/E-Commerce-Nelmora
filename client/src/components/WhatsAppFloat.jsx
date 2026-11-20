@@ -6,16 +6,25 @@ const alreadyClaimed = () => { try { return JSON.parse(localStorage.getItem('nel
 // Bottom-right corner: a small "sale" tag (opens the welcome offer) above the WhatsApp chat button.
 export default function WhatsAppFloat({ number, lift, offer }) {
   const [claimed, setClaimed] = useState(alreadyClaimed);
+  const [atFooter, setAtFooter] = useState(false);
   useEffect(() => {
     const done = () => setClaimed(true);
     window.addEventListener('nelmora:welcome-done', done);
     return () => window.removeEventListener('nelmora:welcome-done', done);
   }, []);
+  // the footer has its own logos and links, so the sale tag steps aside while it is on screen
+  useEffect(() => {
+    const el = document.querySelector('.footer');
+    if (!el || !('IntersectionObserver' in window)) return;
+    const io = new IntersectionObserver(([e]) => setAtFooter(e.isIntersecting), { rootMargin: '0px 0px -120px 0px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
   const showOffer = offer > 0 && !claimed;
   if (!number && !showOffer) return null;
 
   return (
-    <div className={`fab${lift ? ' lift' : ''}`}>
+    <div className={`fab${lift ? ' lift' : ''}${atFooter ? ' atfooter' : ''}`}>
       {showOffer && (
         <button type="button" className="sale-tag" onClick={() => window.dispatchEvent(new Event('nelmora:open-welcome'))} aria-label={`Get ${rm(offer)} off your first order`}>
           <span className="sale-tag-top">Sale</span>

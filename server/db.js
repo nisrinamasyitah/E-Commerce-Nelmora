@@ -157,6 +157,7 @@ const DEFAULT_SETTINGS = {
   announcement: 'Free shipping in Malaysia for orders RM150 and above',
   welcome_discount: 1000,      // welcome offer: sen off a first order (0 = offer switched off, popup hidden)
   welcome_min_spend: 5000,     // minimum order subtotal for the welcome code, sen
+  payment_logos: 'visa,mastercard,amex,applepay,googlepay,fpx,duitnow,grabpay', // logos shown in the "We accept" strip
 };
 
 const newOfferCode = () => {

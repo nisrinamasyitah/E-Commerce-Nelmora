@@ -12,6 +12,10 @@ const { STATES, quote, validateCustomer, clean } = require('./shop');
 const stripe = require('./stripe');
 const storage = require('./storage');
 
+// Logos the "We accept" strip can show. Only DuitNow/bank transfer works without Stripe; the rest need Stripe switched on.
+const PAYMENT_LOGOS = ['visa', 'mastercard', 'amex', 'applepay', 'googlepay', 'fpx', 'duitnow', 'grabpay'];
+const chosenLogos = (v) => String(v || '').split(',').map((x) => x.trim()).filter((x) => PAYMENT_LOGOS.includes(x));
+
 const app = express();
 app.set('trust proxy', true);
 app.disable('x-powered-by');
@@ -171,6 +175,7 @@ app.get('/api/config', async (_req, res) => {
     bank: { name: s.bank_name, accountName: s.bank_account_name, accountNo: s.bank_account_no },
     whatsapp: s.whatsapp, email: s.contact_email, instagram: s.instagram, announcement: s.announcement,
     welcome: { amount: s.welcome_discount, minSpend: s.welcome_min_spend },
+    paymentLogos: stripe.enabled ? chosenLogos(s.payment_logos) : chosenLogos(s.payment_logos).filter((x) => x === 'duitnow'),
     stripeEnabled: stripe.enabled,
   });
 });
@@ -488,6 +493,7 @@ app.put('/api/admin/settings', async (req, res) => {
       if (typeof def === 'number') { v = Math.round(Number(v)); if (!Number.isFinite(v) || v < 0) throw fail(400, `Invalid value for ${k}`); }
       else v = clean(v, 300);
       if (k === 'whatsapp') v = v.replace(/\D/g, '');
+      if (k === 'payment_logos') v = chosenLogos(v).join(',');
       await t.run('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value', [k, JSON.stringify(v)]);
     }
   });

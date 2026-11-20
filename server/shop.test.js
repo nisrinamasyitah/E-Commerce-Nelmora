@@ -239,3 +239,12 @@ test('welcome offer: can be switched off in settings', async () => {
   assert.equal(r.body.code, null);
   await req('PUT', '/api/admin/settings', { welcome_discount: 1000 }, true);
 });
+
+// ---- "We accept" payment logos ----
+test('payment logos: only DuitNow without Stripe; setting is sanitised', async () => {
+  assert.deepEqual((await req('GET', '/api/config')).body.paymentLogos, ['duitnow']);
+  const saved = await req('PUT', '/api/admin/settings', { payment_logos: 'visa, atome, <script>, fpx,duitnow,shopeepay' }, true);
+  assert.equal(saved.body.payment_logos, 'visa,fpx,duitnow');   // unknown / unsupported names are dropped
+  assert.deepEqual((await req('GET', '/api/config')).body.paymentLogos, ['duitnow']);   // still no Stripe -> cards/FPX hidden
+  await req('PUT', '/api/admin/settings', { payment_logos: 'visa,mastercard,amex,applepay,googlepay,fpx,duitnow,grabpay' }, true);
+});

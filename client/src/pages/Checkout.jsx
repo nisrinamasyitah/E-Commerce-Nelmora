@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useStore } from '../store';
 import { api, rm, useTitle } from '../lib';
+import PaymentLogos from '../components/PaymentLogos';
 
 const EMPTY = { name: '', email: '', phone: '', address1: '', address2: '', postcode: '', city: '', state: '', note: '' };
 const SAVED_KEY = 'nelmora.customer.v1';
@@ -135,6 +136,7 @@ export default function Checkout() {
                 <div><strong>Bank transfer / DuitNow</strong><span className="muted small">We’ll show our account details after you place the order. Send us the receipt on WhatsApp.</span></div>
               </label>
             </div>
+            <div className="pay-accept dark"><span>We accept</span><PaymentLogos methods={config?.paymentLogos} /></div>
           </fieldset>
 
           {error && <p className="alert" role="alert">{error}</p>}
