@@ -20,7 +20,9 @@
   --gutter: clamp(16px, 4vw, 48px);
   --header-h: 76px;
   --ease: cubic-bezier(.2, .7, .2, 1);
+  --theme-url: url('/images/theme-1600.jpg');   /* gradient background: light file for phones/tablets */
 }
+@media (min-width: 900px) { :root { --theme-url: url('/images/theme-3200.jpg'); } }   /* HD file for laptops and big screens */
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
@@ -129,7 +131,7 @@ p { margin: 0 0 1em; }
 /* ------------------------------------------------ hero */
 .main-home .hero { margin-top: calc(-1 * var(--header-h)); }
 .hero { position: relative; color: var(--cream); min-height: min(860px, calc(100vh - 36px)); display: flex; align-items: center; overflow: hidden; background: var(--night); }
-.hero-bg { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(28, 21, 20, .82) 0%, rgba(28, 21, 20, .35) 55%, rgba(28, 21, 20, .1) 100%), url('/images/theme.jpg') center/cover no-repeat; transform: scale(1.05); animation: heroZoom 18s ease-out forwards; }
+.hero-bg { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(28, 21, 20, .82) 0%, rgba(28, 21, 20, .35) 55%, rgba(28, 21, 20, .1) 100%), var(--theme-url) center/cover no-repeat; transform: scale(1.05); animation: heroZoom 18s ease-out forwards; }
 @keyframes heroZoom { to { transform: scale(1); } }
 .hero-grid { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: center; padding-top: calc(var(--header-h) + 3rem); padding-bottom: 5rem; }
 .hero-copy { max-width: 560px; animation: fadeUp 1s var(--ease) both; }
@@ -211,7 +213,7 @@ p { margin: 0 0 1em; }
 .family em { font-style: normal; font-size: .64rem; letter-spacing: .22em; text-transform: uppercase; margin-top: .6rem; border-bottom: 1px solid currentColor; padding-bottom: 2px; }
 
 /* ------------------------------------------------ finder banner & page banner */
-.finder-banner, .page-banner, .pdp-banner { position: relative; color: var(--cream); background: linear-gradient(90deg, rgba(28, 21, 20, .78), rgba(28, 21, 20, .3)), url('/images/theme.jpg') center/cover no-repeat; }
+.finder-banner, .page-banner, .pdp-banner { position: relative; color: var(--cream); background: linear-gradient(90deg, rgba(28, 21, 20, .78), rgba(28, 21, 20, .3)), var(--theme-url) center/cover no-repeat; }
 .finder-banner { padding: clamp(4rem, 8vw, 6.5rem) 0; }
 .finder-banner-inner { display: flex; justify-content: space-between; align-items: center; gap: 2rem; flex-wrap: wrap; }
 .finder-banner h2 { margin-bottom: .6rem; }
@@ -491,7 +493,7 @@ legend { font-family: var(--serif); font-size: 1.45rem; margin-bottom: 1rem; pad
   .hero-lead { margin: 0 auto; }
   .hero-actions { justify-content: center; }
   .hero-bottles { height: 340px; order: -1; }
-  .hero-bg { background: linear-gradient(180deg, rgba(28, 21, 20, .2), rgba(28, 21, 20, .75) 60%), url('/images/theme.jpg') center/cover no-repeat; }
+  .hero-bg { background: linear-gradient(180deg, rgba(28, 21, 20, .2), rgba(28, 21, 20, .75) 60%), var(--theme-url) center/cover no-repeat; }
   .hero-scroll { display: none; }
   .grid { grid-template-columns: repeat(2, 1fr); }
   .editorial { grid-template-columns: 1fr; }
