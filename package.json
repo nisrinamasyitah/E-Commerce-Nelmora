@@ -1,0 +1,23 @@
+{
+  "name": "nelmora-shop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Nelmora Parfums online store: React storefront + Express/SQLite backend with admin",
+  "scripts": {
+    "setup": "npm install && npm install --prefix client",
+    "dev": "concurrently -n api,web -c gray,white \"node --watch server/index.js\" \"npm run dev --prefix client\"",
+    "build": "npm run build --prefix client",
+    "start": "node server/index.js",
+    "test": "node --test server/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.4.1",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
