@@ -5,8 +5,8 @@ import { api, rm } from '../lib';
 
 const KEY = 'nelmora.welcome';      // { state: 'done' | 'closed', at: timestamp }
 export const OFFER_KEY = 'nelmora.offer'; // { code, email }, read by checkout
-const DELAY_MS = 5000;
-const REASK_MS = 7 * 24 * 3600 * 1000;
+const DELAY_MS = 1200;                  // shows almost straight away (just after the page appears)
+const REASK_MS = 24 * 3600 * 1000;      // if someone closes it, it comes back the next day
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 const read = () => { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } };
@@ -14,7 +14,7 @@ const write = (state) => { try { localStorage.setItem(KEY, JSON.stringify({ stat
 
 export default function WelcomePopup() {
   const { config } = useStore();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', phone: '', month: '', day: '', gender: '' });
   const [busy, setBusy] = useState(false);
@@ -25,14 +25,19 @@ export default function WelcomePopup() {
   const amount = config?.welcome?.amount || 0;
   const quiet = pathname.startsWith('/checkout') || pathname.startsWith('/order');
 
-  // appear once, a few seconds after the first visit (and again after a week if it was closed)
+  // Load the photo in the background so it is already there when the popup opens
+  useEffect(() => { if (amount) new Image().src = '/images/products/aura.jpg'; }, [amount]);
+
+  // Appears right away for new visitors. If it was closed it returns the next day; once someone signs up it never returns.
+  // Add ?welcome to any address (e.g. /?welcome) to preview it again.
   useEffect(() => {
     if (!amount || quiet) return;
+    const preview = new URLSearchParams(search).has('welcome');
     const seen = read();
-    if (seen && (seen.state === 'done' || Date.now() - seen.at < REASK_MS)) return;
-    const t = setTimeout(() => setOpen(true), DELAY_MS);
+    if (!preview && seen && (seen.state === 'done' || Date.now() - seen.at < REASK_MS)) return;
+    const t = setTimeout(() => { setResult(null); setOpen(true); }, DELAY_MS);
     return () => clearTimeout(t);
-  }, [amount, quiet]);
+  }, [amount, quiet, search]);
 
   useEffect(() => {
     if (!open) return;
