@@ -149,8 +149,8 @@ const DEFAULT_SETTINGS = {
   shipping_east: 1500,         // Sabah, Sarawak, Labuan, sen
   free_shipping_min: 15000,    // free shipping at RM150 and above, sen (0 = never free)
   bank_name: 'Maybank',
-  bank_account_name: 'NELMORA PARFUMS',
-  bank_account_no: '0000 0000 0000',
+  bank_account_name: 'NELMORA GROUP EMPIRE',
+  bank_account_no: '5686 0314 0816',
   whatsapp: '60176304903',     // international format, digits only
   contact_email: 'hello@nelmoraparfums.com',
   instagram: 'nelmoraparfums',
