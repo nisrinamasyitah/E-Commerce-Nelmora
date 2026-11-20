@@ -10,7 +10,7 @@ process.env.DATA_DIR = tmp;
 process.env.ADMIN_PASSWORD = 'test-pass';
 process.env.STRIPE_SECRET_KEY = '';
 
-const { app } = require('./index');
+const { app } = require('./app');
 const { quote, shippingFor } = require('./shop');
 let server, base, token;
 
@@ -101,4 +101,72 @@ test('invalid customer details are rejected with field errors', async () => {
 test('admin routes require login', async () => {
   assert.equal((await req('GET', '/api/admin/orders')).status, 401);
   assert.equal((await req('POST', '/api/admin/login', { password: 'nope' })).status, 401);
+});
+
+// ---- the Netlify function wrapper (what actually runs online) ----
+const { handler } = require('../netlify/functions/shop');
+const lambda = (method, path, { body, headers = {}, query = {}, base64 = false } = {}) => handler({
+  httpMethod: method,
+  path: `/.netlify/functions/shop${path}`,
+  rawUrl: `https://example.netlify.app${path}`,
+  headers: { host: 'example.netlify.app', 'x-forwarded-proto': 'https', ...headers },
+  multiValueHeaders: {},
+  queryStringParameters: query,
+  body: body ?? null,
+  isBase64Encoded: base64,
+}, {});
+
+test('netlify function: serves products and config', async () => {
+  const r = await lambda('GET', '/api/products');
+  assert.equal(r.statusCode, 200);
+  assert.equal(JSON.parse(r.body).length, 12);
+  assert.match(String(r.headers['cache-control']), /no-store/);
+  assert.equal((await lambda('GET', '/api/config')).statusCode, 200);
+  assert.equal((await lambda('GET', '/api/nope')).statusCode, 404);
+});
+
+test('netlify function: places an order with a JSON body', async () => {
+  const products = JSON.parse((await lambda('GET', '/api/products')).body);
+  const v = products.find((p) => p.slug === 'aura').variants[0];
+  const r = await lambda('POST', '/api/orders', {
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ customer, items: [{ variantId: v.id, qty: 1 }], paymentMethod: 'transfer' }),
+  });
+  assert.equal(r.statusCode, 200, r.body);
+  assert.match(JSON.parse(r.body).code, /^NM-/);
+});
+
+test('netlify function: admin upload (binary) then image is served back', async () => {
+  const login = JSON.parse((await lambda('POST', '/api/admin/login', { headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password: 'test-pass' }) })).body);
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
+  const up = await lambda('POST', '/api/admin/upload', { headers: { 'content-type': 'image/png', authorization: `Bearer ${login.token}` }, body: png.toString('base64'), base64: true });
+  assert.equal(up.statusCode, 200, up.body);
+  const { url } = JSON.parse(up.body);
+  const img = await lambda('GET', url);
+  assert.equal(img.statusCode, 200);
+  assert.equal(img.isBase64Encoded, true);
+  assert.deepEqual(Buffer.from(img.body, 'base64'), png);
+  const noAuth = await lambda('POST', '/api/admin/upload', { headers: { 'content-type': 'image/png' }, body: png.toString('base64'), base64: true });
+  assert.equal(noAuth.statusCode, 401);
+});
+
+test('admin: edit stock, product and settings; brute force is limited', async () => {
+  const token = (await req('POST', '/api/admin/login', { password: 'test-pass' })).body.token;
+  const get = (u) => req('GET', u, null, true);
+  const products = (await get('/api/admin/products')).body;
+  const p = products.find((x) => x.slug === 'horizon');
+  const saved = await req('PUT', `/api/admin/products/${p.id}`, { ...p, tagline: 'New tagline', variants: p.variants.map((v) => ({ ...v, stock: 4 })) }, true);
+  assert.equal(saved.status, 200, JSON.stringify(saved.body));
+  assert.equal(saved.body.tagline, 'New tagline');
+  assert.deepEqual(saved.body.variants.map((v) => v.stock), [4, 4]);
+  const created = await req('POST', '/api/admin/products', { name: 'Test Scent', gender: 'Unisex', variants: [{ size: '50ml', price: 9000, stock: 2 }] }, true);
+  assert.equal(created.status, 200, JSON.stringify(created.body));
+  assert.equal((await req('POST', '/api/admin/products', { name: 'Test Scent', variants: [] }, true)).status, 400);
+  const st = await req('PUT', '/api/admin/settings', { bank_account_no: '1234 5678', free_shipping_min: 20000 }, true);
+  assert.equal(st.body.bank_account_no, '1234 5678');
+  assert.equal(st.body.free_shipping_min, 20000);
+  assert.equal(typeof token, 'string');
+
+  for (let i = 0; i < 5; i++) await req('POST', '/api/admin/login', { password: 'wrong' });
+  assert.equal((await req('POST', '/api/admin/login', { password: 'wrong' })).status, 429);
 });

@@ -26,7 +26,7 @@ export default function Settings() {
   async function backup() {
     const res = await fetch('/api/admin/backup', { headers: { Authorization: `Bearer ${token}` } });
     const url = URL.createObjectURL(await res.blob());
-    Object.assign(document.createElement('a'), { href: url, download: `nelmora-shop-${new Date().toISOString().slice(0, 10)}.db` }).click();
+    Object.assign(document.createElement('a'), { href: url, download: `nelmora-shop-${new Date().toISOString().slice(0, 10)}.json` }).click();
     URL.revokeObjectURL(url);
   }
 
@@ -64,7 +64,7 @@ export default function Settings() {
 
       <section className="a-panel">
         <h2>Backup</h2>
-        <p className="muted">Download a copy of the whole shop database (products, orders, messages). Keep one somewhere safe every week.</p>
+        <p className="muted">Download a copy of all shop data (products, orders, messages, subscribers) as a file. Keep one somewhere safe every week.</p>
         <button className="btn btn-ghost" onClick={backup}>Download backup</button>
       </section>
     </>
