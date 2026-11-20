@@ -9,6 +9,11 @@ const dataDir = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
 const url = process.env.TURSO_DATABASE_URL || process.env.DB_URL || `file:${path.join(dataDir, 'shop.db')}`;
 const isFile = url.startsWith('file:') || url === ':memory:';
 
+// Online (Netlify = AWS Lambda) there is no disk, so a database URL is required.
+const online = !!(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const missingConfig = online && !process.env.TURSO_DATABASE_URL && !process.env.DB_URL;
+const CONFIG_MESSAGE = 'The shop database is not set up yet. In Netlify add TURSO_DATABASE_URL and TURSO_AUTH_TOKEN under Site configuration → Environment variables, then redeploy.';
+
 function makeClient() {
   if (isFile) {
     if (url.startsWith('file:')) fs.mkdirSync(path.dirname(url.slice(5)), { recursive: true });
@@ -20,7 +25,7 @@ function makeClient() {
   const { createClient } = require('@libsql/client/web');
   return createClient({ url: url.replace(/^libsql:/, 'https:'), authToken: process.env.TURSO_AUTH_TOKEN || undefined });
 }
-const client = makeClient();
+const client = missingConfig ? null : makeClient();
 
 const toRows = (rs) => rs.rows.map((r) => Object.fromEntries(rs.columns.map((c, i) => [c, r[i]])));
 
@@ -206,7 +211,9 @@ async function init() {
 }
 
 // Every request waits for this (it is created once per server start).
-db.ready = init().catch((e) => { console.error('Database setup failed:', e); throw e; });
+db.ready = missingConfig
+  ? Promise.reject(Object.assign(new Error(CONFIG_MESSAGE), { isConfig: true }))
+  : init().catch((e) => { console.error('Database setup failed:', e); throw e; });
 db.ready.catch(() => {}); // avoid an unhandled-rejection crash; requests will report the error
 
 module.exports = { db, url, isFile, getSettings, DEFAULT_SETTINGS, client };

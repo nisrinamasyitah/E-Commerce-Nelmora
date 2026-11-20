@@ -123,7 +123,9 @@ async function expireUnpaid() {
 
 // ---------------------------------------------------------------- setup middleware
 app.use(async (_req, res, next) => {
-  try { await db.ready; next(); } catch { res.status(503).json({ error: 'The shop database is unavailable. Please try again shortly.' }); }
+  try { await db.ready; next(); } catch (e) {
+    res.status(503).json({ error: e.isConfig ? e.message : 'The shop database is unavailable. Please try again shortly.' });
+  }
 });
 app.use('/api', (_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 
