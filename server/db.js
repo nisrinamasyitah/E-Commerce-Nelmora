@@ -153,7 +153,7 @@ const DEFAULT_SETTINGS = {
   bank_account_no: '5686 0314 0816',
   whatsapp: '60176304903',     // international format, digits only
   contact_email: 'hello@nelmoraparfums.com',
-  instagram: 'nelmoraparfums',
+  instagram: 'nelmorahq',
   announcement: 'Free shipping in Malaysia for orders RM150 and above',
   welcome_discount: 1000,      // welcome offer: sen off a first order (0 = offer switched off, popup hidden)
   welcome_min_spend: 5000,     // minimum order subtotal for the welcome code, sen
