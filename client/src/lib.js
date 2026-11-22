@@ -41,7 +41,7 @@ const DEFAULT_DESC = 'Nelmora Parfums: long-lasting eau de parfum made in Malays
 // Sets the tab title, plus the page's search description and canonical address so Google can tell pages apart.
 export function useTitle(title, description) {
   useEffect(() => {
-    document.title = title ? `${title} | Nelmora Parfums` : 'Nelmora Parfums | Eau de Parfum, Made in Malaysia';
+    document.title = title ? `${title} | Nelmora Parfums` : 'Nelmora - A story in every scent';
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute('content', description || DEFAULT_DESC);
     const link = document.querySelector('link[rel="canonical"]');
