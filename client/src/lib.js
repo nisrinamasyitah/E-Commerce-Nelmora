@@ -36,7 +36,7 @@ export const MOODS = [
 ];
 export const inMood = (product, key) => MOODS.find((m) => m.key === key)?.test.test(product.family) ?? true;
 
-const DEFAULT_DESC = 'Nelmora Parfums: long-lasting eau de parfum made in Malaysia. Shop 10ml and 30ml bottles of Horizon, Elara, Caffè Latte, Aura and more.';
+const DEFAULT_DESC = 'Nelmora Parfums. Twelve eaux de parfum for women and men, made in Malaysia. Shop the Signature 30ml collection and 10ml travel sizes.';
 
 // Sets the tab title, plus the page's search description and canonical address so Google can tell pages apart.
 export function useTitle(title, description) {
