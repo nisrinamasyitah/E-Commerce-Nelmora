@@ -36,13 +36,20 @@ export const MOODS = [
 ];
 export const inMood = (product, key) => MOODS.find((m) => m.key === key)?.test.test(product.family) ?? true;
 
-export function useTitle(title) {
+const DEFAULT_DESC = 'Nelmora Parfums: long-lasting eau de parfum made in Malaysia. Shop 10ml and 30ml bottles of Horizon, Elara, Caffè Latte, Aura and more.';
+
+// Sets the tab title, plus the page's search description and canonical address so Google can tell pages apart.
+export function useTitle(title, description) {
   useEffect(() => {
     document.title = title ? `${title} | Nelmora Parfums` : 'Nelmora Parfums | Eau de Parfum, Made in Malaysia';
-  }, [title]);
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute('content', description || DEFAULT_DESC);
+    const link = document.querySelector('link[rel="canonical"]');
+    if (link) link.setAttribute('href', `https://nelmoragroup.com${window.location.pathname === '/' ? '/' : window.location.pathname.replace(/\/$/, '')}`);
+  }, [title, description]);
 }
 
-export const notesList =(notes) => String(notes || '').split(',').map((n) => n.trim()).filter(Boolean);
+export const notesList = (notes) => String(notes || '').split(',').map((n) => n.trim()).filter(Boolean);
 
 // Ingredient pictures from the catalogue (public/images/notes). Matches the note name loosely, so
 // "Calabrian Bergamot" and "Bourbon Vanilla" still find their picture. Returns null if there is none.

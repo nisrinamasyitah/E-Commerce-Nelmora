@@ -3,7 +3,7 @@ import { useStore } from '../store';
 import { api, waLink, useTitle } from '../lib';
 
 export default function Contact() {
-  useTitle('Contact');
+  useTitle('Contact', 'Contact Nelmora Parfums for orders, bulk and gift enquiries, or help choosing a scent.');
   const { config } = useStore();
   const [form, setForm] = useState({ name: '', email: '', message: '' });
   const [state, setState] = useState({ busy: false, sent: false, error: '' });

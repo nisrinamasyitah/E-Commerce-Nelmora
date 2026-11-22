@@ -16,7 +16,7 @@ export default function Product() {
   const [view, setView] = useState('photo');
   const [showSticky, setShowSticky] = useState(false);
   const buyRef = useRef(null);
-  useTitle(product ? `${product.name} Eau de Parfum` : '');
+  useTitle(product ? `${product.name} Eau de Parfum` : '', product ? `${product.name} eau de parfum by Nelmora. ${product.tagline} Notes of ${notesList(product.notes).join(', ')}. Available in 10ml and 30ml. Made in Malaysia.` : undefined);
 
   useEffect(() => {
     if (!product) return;

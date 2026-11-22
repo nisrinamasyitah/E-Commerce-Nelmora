@@ -4,7 +4,7 @@ import { useStore } from '../store';
 import { rm, useTitle } from '../lib';
 
 export default function About() {
-  useTitle('Our Story');
+  useTitle('Our Story', 'The story behind Nelmora Parfums: a Malaysian fragrance house making long-lasting eau de parfum, one scent at a time.');
   const { config } = useStore();
   const { hash } = useLocation();
   useEffect(() => { if (hash) document.querySelector(hash)?.scrollIntoView(); }, [hash]);

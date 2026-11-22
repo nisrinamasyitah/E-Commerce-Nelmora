@@ -21,7 +21,7 @@ function score(p, a) {
 }
 
 export default function Finder() {
-  useTitle('Scent Finder');
+  useTitle('Scent Finder', 'Not sure which Nelmora scent to pick? Answer a few quick questions and find your perfect eau de parfum.');
   const { products, add } = useStore();
   const [answers, setAnswers] = useState({});
   const step = QUESTIONS.findIndex((q) => !answers[q.key]);

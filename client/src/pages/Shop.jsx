@@ -45,7 +45,7 @@ export default function Shop() {
     : gender === 'Women' ? 'Sweet, floral and fruity compositions with a soft, lasting trail.'
       : gender === 'Men' ? 'Fresh, woody and amber compositions with quiet confidence.'
         : 'Twelve signature eaux de parfum, each available in 10ml and 30ml.';
-  useTitle(q ? `Search: ${q}` : title);
+  useTitle(q ? `Search: ${q}` : title, q ? undefined : `${title}: ${intro}`);
 
   return (
     <>
