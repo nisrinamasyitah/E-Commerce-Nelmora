@@ -204,19 +204,47 @@ app.get('/api/products/:slug', async (req, res) => {
   res.json(publicProduct(p));
 });
 
-// Customer reviews. The shop owner enters these in Admin from real customer feedback; nothing is generated here.
+// Customer reviews. The owner enters real feedback in Admin, and customers can write their own (held for approval).
 app.get('/api/reviews', async (req, res) => {
   const slug = clean(req.query.product, 80);
   const rows = await db.all(
-    `SELECT r.id, r.name, r.rating, r.body, r.source, r.reviewed_at, p.name product_name, p.slug product_slug
+    `SELECT r.id, r.name, r.rating, r.body, r.source, r.verified, r.reviewed_at, p.name product_name, p.slug product_slug
        FROM reviews r LEFT JOIN products p ON p.id = r.product_id
       WHERE r.published = 1 ${slug ? 'AND p.slug = ?' : ''} ORDER BY r.reviewed_at DESC, r.id DESC LIMIT 100`,
     slug ? [slug] : [],
   );
-  const reviews = rows.map((r) => ({ id: r.id, name: r.name, rating: r.rating, body: r.body, source: r.source, date: r.reviewed_at, product: r.product_name || '', slug: r.product_slug || '' }));
+  const reviews = rows.map((r) => ({ id: r.id, name: r.name, rating: r.rating, body: r.body, source: r.source, verified: !!r.verified, date: r.reviewed_at, product: r.product_name || '', slug: r.product_slug || '' }));
   const rated = reviews.filter((r) => r.rating > 0);
-  const average = rated.length ? Math.round((rated.reduce((a, r) => a + r.rating, 0) / rated.length) * 10) / 10 : 0;
-  res.json({ count: reviews.length, rated: rated.length, average, reviews });
+  const dist = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  rated.forEach((r) => { dist[r.rating] += 1; });
+  const average = rated.length ? Math.round((rated.reduce((x, r) => x + r.rating, 0) / rated.length) * 10) / 10 : 0;
+  res.json({ count: reviews.length, rated: rated.length, average, dist, reviews });
+});
+
+app.post('/api/reviews', async (req, res) => {
+  const b = req.body || {};
+  if (b.website) return res.json({ ok: true, verified: false }); // hidden field: only bots fill it in
+  const key = `review:${clientIp(req)}`;
+  if (await blocked(key, 3, 3600_000)) return res.status(429).json({ error: 'Too many reviews from this connection. Please try again later.' });
+  const product = await db.get('SELECT id FROM products WHERE slug = ? AND active = 1', [clean(b.product, 80)]);
+  const name = clean(b.name, 60), body = clean(b.body, 1000), rating = Math.round(Number(b.rating));
+  const email = clean(b.email, 160).toLowerCase();
+  if (!product) return res.status(400).json({ error: 'Please choose a scent to review.' });
+  if (!name) return res.status(400).json({ error: 'Please enter your name.' });
+  if (!(rating >= 1 && rating <= 5)) return res.status(400).json({ error: 'Please choose 1 to 5 stars.' });
+  if (body.length < 10) return res.status(400).json({ error: 'Please write a little more (at least 10 characters).' });
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'That email address does not look right.' });
+  // "Verified buyer" only when the order number + email match a paid order that contains this scent.
+  let verified = 0;
+  const code = clean(b.order, 40).toUpperCase();
+  if (code && email) {
+    const o = await db.get("SELECT id FROM orders WHERE code = ? AND lower(email) = ? AND payment_status = 'paid' AND status != 'cancelled'", [code, email]);
+    if (o && await db.get('SELECT 1 x FROM order_items oi JOIN variants v ON v.id = oi.variant_id WHERE oi.order_id = ? AND v.product_id = ?', [o.id, product.id])) verified = 1;
+  }
+  await hit(key);
+  await db.run("INSERT INTO reviews (product_id, name, rating, body, source, reviewed_at, published, pending, verified, email) VALUES (?, ?, ?, ?, 'Website', date('now'), 0, 1, ?, ?)",
+    [product.id, name, rating, body, verified, email]);
+  res.json({ ok: true, verified: !!verified });
 });
 
 app.post('/api/quote', async (req, res) => {
@@ -540,7 +568,7 @@ app.patch('/api/admin/messages/:id', async (req, res) => {
 });
 
 app.get('/api/admin/reviews', async (_req, res) => res.json(await db.all(
-  `SELECT r.*, p.name product_name FROM reviews r LEFT JOIN products p ON p.id = r.product_id ORDER BY r.reviewed_at DESC, r.id DESC`)));
+  `SELECT r.*, p.name product_name FROM reviews r LEFT JOIN products p ON p.id = r.product_id ORDER BY r.pending DESC, r.reviewed_at DESC, r.id DESC`)));
 function reviewFields(b) {
   const name = clean(b.name, 60), body = clean(b.body, 1000), rating = Math.round(Number(b.rating));
   if (!name) throw fail(400, 'Customer name is required.');
@@ -554,7 +582,11 @@ app.post('/api/admin/reviews', async (req, res) => {
   res.json({ id: r.lastInsertRowid });
 });
 app.put('/api/admin/reviews/:id', async (req, res) => {
-  await db.run('UPDATE reviews SET product_id = ?, name = ?, rating = ?, body = ?, source = ?, reviewed_at = ?, published = ? WHERE id = ?', [...reviewFields(req.body), req.params.id]);
+  await db.run('UPDATE reviews SET product_id = ?, name = ?, rating = ?, body = ?, source = ?, reviewed_at = ?, published = ?, pending = 0 WHERE id = ?', [...reviewFields(req.body), req.params.id]);
+  res.json({ ok: true });
+});
+app.post('/api/admin/reviews/:id/approve', async (req, res) => {
+  await db.run('UPDATE reviews SET published = 1, pending = 0 WHERE id = ?', [req.params.id]);
   res.json({ ok: true });
 });
 app.delete('/api/admin/reviews/:id', async (req, res) => {

@@ -226,6 +226,7 @@ const CATALOGUE = [
 async function init() {
   await client.batch(SCHEMA, 'write');
   await addColumns('orders', [['discount', 'INTEGER NOT NULL DEFAULT 0'], ['discount_code', "TEXT NOT NULL DEFAULT ''"]]);
+  await addColumns('reviews', [['verified', 'INTEGER NOT NULL DEFAULT 0'], ['pending', 'INTEGER NOT NULL DEFAULT 0'], ['email', "TEXT NOT NULL DEFAULT ''"]]);
   await addColumns('subscribers', [['name', "TEXT NOT NULL DEFAULT ''"], ['phone', "TEXT NOT NULL DEFAULT ''"], ['birthday', "TEXT NOT NULL DEFAULT ''"],
     ['gender', "TEXT NOT NULL DEFAULT ''"], ['source', "TEXT NOT NULL DEFAULT ''"], ['code', 'TEXT'], ['used_order', 'INTEGER']]);
   await db.run('CREATE UNIQUE INDEX IF NOT EXISTS subscribers_code ON subscribers(code)');

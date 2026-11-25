@@ -143,7 +143,7 @@ export default function Product() {
         </div>
       </section>
 
-      <Reviews slug={product.slug} title={`Reviews for ${product.name}`} />
+      <Reviews slug={product.slug} productName={product.name} title={`Reviews for ${product.name}`} />
 
       {related.length > 0 && (
         <section className="section">

@@ -32,6 +32,11 @@ export default function Reviews() {
     await call(`/admin/reviews/${r.id}`, { method: 'DELETE' });
     reload();
   }
+  async function approve(r) {
+    await call(`/admin/reviews/${r.id}/approve`, { method: 'POST' });
+    reload();
+  }
+  const pending = data?.filter((r) => r.pending) || [];
   async function toggle(r) {
     await call(`/admin/reviews/${r.id}`, { method: 'PUT', body: { ...r, product_id: r.product_id, published: !r.published } });
     reload();
@@ -47,6 +52,12 @@ export default function Reviews() {
         Add only real feedback from real customers, with their permission, and use first names only. Keep their own words, including Malay.
         Reviews appear on the scent page they belong to, and on the home page.
       </p>
+
+      {pending.length > 0 && (
+        <p className="alert" style={{ maxWidth: '60ch' }}>
+          {pending.length} new review{pending.length > 1 ? 's' : ''} from customers {pending.length > 1 ? 'are' : 'is'} waiting for your approval. They are not shown on the website until you click Approve.
+        </p>
+      )}
 
       {form && (
         <form className="a-panel a-form" onSubmit={save}>
@@ -82,13 +93,14 @@ export default function Reviews() {
             <thead><tr><th>Customer</th><th>Scent</th><th>Review</th><th /></tr></thead>
             <tbody>
               {data.map((r) => (
-                <tr key={r.id} className={r.published ? '' : 'dim'}>
-                  <td><strong>{r.name}</strong>{r.rating > 0 && <div className="muted small">{stars(r.rating)}</div>}<div className="muted small">{r.reviewed_at}{r.source ? ` · ${r.source}` : ''}</div></td>
+                <tr key={r.id} className={r.published || r.pending ? '' : 'dim'}>
+                  <td><strong>{r.name}</strong>{!!r.pending && <span className="pill s-processing">waiting</span>}{!!r.verified && <span className="pill s-completed">verified</span>}{r.rating > 0 && <div className="muted small">{stars(r.rating)}</div>}<div className="muted small">{r.reviewed_at}{r.source ? ` · ${r.source}` : ''}</div>{r.email && <div className="muted small">{r.email}</div>}</td>
                   <td>{r.product_name || <span className="muted">Whole shop</span>}</td>
                   <td style={{ maxWidth: '46ch' }}>{r.body}</td>
                   <td className="num">
+                    {r.pending ? <><button className="link-btn small" onClick={() => approve(r)}>Approve</button>{' · '}</> : null}
                     <button className="link-btn small" onClick={() => setForm({ ...r, product_id: r.product_id ?? '', published: !!r.published })}>Edit</button>{' · '}
-                    <button className="link-btn small" onClick={() => toggle(r)}>{r.published ? 'Hide' : 'Show'}</button>{' · '}
+                    {!r.pending && <><button className="link-btn small" onClick={() => toggle(r)}>{r.published ? 'Hide' : 'Show'}</button>{' · '}</>}
                     <button className="link-btn small" onClick={() => remove(r)}>Delete</button>
                   </td>
                 </tr>
