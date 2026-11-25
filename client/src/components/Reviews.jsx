@@ -6,23 +6,20 @@ const Stars = ({ n }) => <span className="stars" role="img" aria-label={`${n} ou
 const when = (d) => { try { return new Date(`${d}T00:00:00`).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' }); } catch { return ''; } };
 const Check = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true"><path d="m5 12 5 5 9-10" /></svg>;
 
-function Card({ r, showScent }) {
+function Row({ r, showScent }) {
   return (
-    <figure className="review">
-      <div className="review-top">
-        <span className="review-avatar" aria-hidden="true">{r.name.trim().charAt(0).toUpperCase()}</span>
-        <div className="review-who">
-          <strong>{r.name}</strong>
-          {r.verified && <span className="review-verified"><Check /> Verified buyer</span>}
-        </div>
-        {r.rating > 0 && <Stars n={r.rating} />}
+    <article className="rv-row">
+      <div className="rv-name">
+        <strong>{r.name}</strong>
+        {r.verified && <span className="review-verified"><Check /> Verified buyer</span>}
       </div>
-      <blockquote>{r.body}</blockquote>
-      <figcaption>
-        <span>{[r.source, when(r.date)].filter(Boolean).join(' · ')}</span>
+      <div className="rv-main">
+        {r.rating > 0 && <Stars n={r.rating} />}
+        <p>{r.body}</p>
         {showScent && r.slug && <Link to={`/shop/${r.slug}`}>{r.product}</Link>}
-      </figcaption>
-    </figure>
+      </div>
+      <div className="rv-date">{when(r.date)}{r.source && <span>{r.source}</span>}</div>
+    </article>
   );
 }
 
@@ -51,7 +48,7 @@ function Summary({ data, onWrite }) {
           ))}
         </ul>
       )}
-      {onWrite && <button className="btn rv-write" onClick={onWrite}>Write a review</button>}
+      {onWrite && <button className="btn btn-outline-light rv-write" onClick={onWrite}>Write a review</button>}
     </div>
   );
 }
@@ -130,20 +127,20 @@ export default function Reviews({ slug, productName, limit, title = 'What custom
     <section className="section reviews" id="reviews">
       <div className="container">
         <div className="section-head centered">
-          <p className="eyebrow">{eyebrow}</p>
+          <p className="eyebrow light">{eyebrow}</p>
           <h2>{title}</h2>
         </div>
         {data.count > 0 ? <Summary data={data} onWrite={slug ? () => setWriting(true) : null} /> : (
           <div className="rv-empty">
             <p>No reviews yet. Be the first to share how {productName || 'it'} wears.</p>
-            <button className="btn" onClick={() => setWriting(true)}>Write a review</button>
+            <button className="btn btn-outline-light" onClick={() => setWriting(true)}>Write a review</button>
           </div>
         )}
         {writing && slug && <ReviewForm slug={slug} productName={productName} onClose={() => setWriting(false)} />}
         {data.count > 0 && (
-          <div className="review-grid">{list.map((r) => <Card key={r.id} r={r} showScent={!slug} />)}</div>
+          <div className="rv-list">{list.map((r) => <Row key={r.id} r={r} showScent={!slug} />)}</div>
         )}
-        {!limit && data.count > 6 && !all && <div className="center mt-lg"><button className="btn btn-ghost" onClick={() => setAll(true)}>Show all {data.count} reviews</button></div>}
+        {!limit && data.count > 6 && !all && <div className="center mt-lg"><button className="btn btn-outline-light" onClick={() => setAll(true)}>Show all {data.count} reviews</button></div>}
       </div>
     </section>
   );
