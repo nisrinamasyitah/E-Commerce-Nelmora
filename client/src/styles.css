@@ -167,6 +167,7 @@ p { margin: 0 0 1em; }
 
 /* ------------------------------------------------ product grid & card */
 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(1.2rem, 2.6vw, 2.6rem); row-gap: clamp(2.4rem, 4vw, 4rem); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
 .card { display: flex; flex-direction: column; }
 .card-media { position: relative; overflow: hidden; background: var(--stone); aspect-ratio: 4/5; }
 .card-link { position: absolute; inset: 0; display: block; }

@@ -186,26 +186,26 @@ async function getSettings() {
 // The real Nelmora scents, 10ml RM25 and 30ml RM65.
 // Descriptions are starter copy: edit them any time in Admin → Products.
 const CATALOGUE = [
+  ['victus-cologne', 'Victus Cologne', 'Men', 'Fresh Aquatic', 'Citrus, Marine, Patchouli', 'Sea breeze and sharp citrus.',
+    'Zesty citrus and cool marine notes rush in like an ocean wind, settling onto a patchouli base. Fresh, sporty and perfect for Malaysian heat.', 1],
   ['horizon', 'Horizon', 'Men', 'Fresh Woody', 'Calabrian Bergamot, Patchouli', 'Bright as first light, grounded as the earth.',
     'Sparkling Calabrian bergamot opens wide and clean, then settles onto a warm, earthy patchouli base. A confident everyday scent that moves easily from morning meetings to evenings out.', 1],
   ['elara', 'Elara', 'Women', 'Gourmand', 'Sugar, Vanilla, Marshmallow', 'Soft, sweet and impossible to forget.',
     'Spun sugar and fluffy marshmallow melt into a creamy vanilla heart. Elara is cosy and playful, a sweet signature that lingers on skin and scarves alike.', 1],
-  ['strawberry-kiss', 'Strawberry Kiss', 'Women', 'Fruity', 'Strawberry, Cedarwood', 'Ripe strawberries on a sunlit afternoon.',
-    'Juicy strawberry gives a bright, flirtatious opening, balanced by smooth cedarwood so it never turns too sweet. Light, happy and easy to wear.', 0],
   ['aura', 'Aura', 'Women', 'Powdery Musk', 'Vanilla, Musk, Powdery', 'A soft glow that follows you.',
     'Clean musk and a powdery veil wrapped around gentle vanilla. Aura feels like freshly washed skin: close, comforting and quietly elegant.', 1],
+  ['strawberry-kiss', 'Strawberry Kiss', 'Women', 'Fruity', 'Strawberry, Cedarwood', 'Ripe strawberries on a sunlit afternoon.',
+    'Juicy strawberry gives a bright, flirtatious opening, balanced by smooth cedarwood so it never turns too sweet. Light, happy and easy to wear.', 0],
   ['sweet-roma', 'Sweet Roma', 'Women', 'Gourmand', 'Bourbon Vanilla, Black Currant, Guaiac Wood', 'Rich vanilla with a dark fruit twist.',
     'Tart black currant meets velvety bourbon vanilla, finished with smoky guaiac wood. Sweet Roma is warm and sophisticated, made for evenings.', 0],
   ['delusion', 'Delusion', 'Men', 'Aromatic Woody', 'Chinese Black Tea, Calabrian Bergamot, Guaiac Wood', 'Smoky tea, citrus light, quiet power.',
-    'Smoky Chinese black tea lifted by bergamot and anchored by resinous guaiac wood. Refined and a little mysterious, Delusion leaves an impression without trying.', 1],
+    'Smoky Chinese black tea lifted by bergamot and anchored by resinous guaiac wood. Refined and a little mysterious, Delusion leaves an impression without trying.', 0],
   ['onyx', 'Onyx', 'Men', 'Amber Gourmand', 'Tonka Bean, Cocoa', 'Deep, dark and magnetic.',
     'Roasted cocoa and creamy tonka bean create a warm, addictive trail. Onyx is bold and sensual, a night-time scent with real presence.', 0],
-  ['victus-cologne', 'Victus Cologne', 'Men', 'Fresh Aquatic', 'Citrus, Marine, Patchouli', 'Sea breeze and sharp citrus.',
-    'Zesty citrus and cool marine notes rush in like an ocean wind, settling onto a patchouli base. Fresh, sporty and perfect for Malaysian heat.', 0],
   ['valentus', 'Valentus', 'Men', 'Woody Musk', 'Calabrian Bergamot, Patchouli, Musk', 'Clean, polished, effortlessly masculine.',
     'Bergamot brightness over a smooth blend of patchouli and skin-like musk. Valentus is the well-tailored scent you reach for every day.', 0],
   ['caffe-latte', 'Caffè Latte', 'Men', 'Gourmand', 'Coffee, Vanilla, Cocoa', 'Your favourite café, bottled.',
-    'Freshly brewed coffee softened with vanilla and a dusting of cocoa. Caffè Latte is warm, smooth and comforting, as inviting as the first sip.', 1],
+    'Freshly brewed coffee softened with vanilla and a dusting of cocoa. Caffè Latte is warm, smooth and comforting, as inviting as the first sip.', 0],
   ['noir-berry', 'Noir Berry', 'Women', 'Fruity Woody', 'Berries, Vanilla, Woody Notes', 'Dark berries, soft vanilla, a woody hush.',
     'A basket of dark berries over vanilla and warm woods. Noir Berry is fruity yet grown-up, sweet with a mysterious edge.', 0],
   ['citrus-muse', 'Citrus Muse', 'Women', 'Fresh Citrus', 'Citruses, Musk, Sandalwood', 'Sunny citrus on soft sandalwood.',
@@ -241,6 +241,17 @@ async function init() {
       }
     });
     await client.batch(stmts, 'write');
+  }
+
+  // One-time: bestsellers are Victus Cologne, Horizon, Elara, Aura (in that order). Runs once per database;
+  // after that, Admin → Products is the source of truth. The settings row is the "already done" marker.
+  const mark = await db.run("INSERT OR IGNORE INTO settings (key, value) VALUES ('migration_bestsellers_1', 'true')");
+  if (mark.changes) {
+    const best = ['victus-cologne', 'horizon', 'elara', 'aura'];
+    await client.batch([
+      { sql: 'UPDATE products SET featured = 0, sort = sort + 10', args: [] },
+      ...best.map((slug, i) => ({ sql: 'UPDATE products SET featured = 1, sort = ? WHERE slug = ?', args: [i, slug] })),
+    ], 'write');
   }
 }
 

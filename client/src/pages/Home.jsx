@@ -11,7 +11,7 @@ export default function Home() {
   useTitle('');
   const { products, config } = useStore();
   const [tab, setTab] = useState('best');
-  const list = (products || []).filter((p) => (tab === 'best' ? p.featured : p.gender === tab)).slice(0, 3);
+  const list = (products || []).filter((p) => (tab === 'best' ? p.featured : p.gender === tab)).slice(0, tab === 'best' ? 4 : 3);
 
   return (
     <>
@@ -54,7 +54,7 @@ export default function Home() {
               {TABS.map(([k, l]) => <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}
             </div>
           </div>
-          <div className="grid">
+          <div className={`grid${tab === 'best' ? ' grid-4' : ''}`}>
             {products ? list.map((p) => <ProductCard key={p.id} product={p} />) : Array.from({ length: 3 }, (_, i) => <div key={i} className="card ph-card" />)}
           </div>
           <div className="center mt-lg"><Link to={tab === 'best' ? '/shop' : `/shop?for=${tab}`} className="btn btn-ghost">View all fragrances</Link></div>
