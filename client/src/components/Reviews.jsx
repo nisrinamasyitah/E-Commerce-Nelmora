@@ -18,35 +18,44 @@ function Row({ r, showScent }) {
         <p>{r.body}</p>
         {showScent && r.slug && <Link to={`/shop/${r.slug}`}>{r.product}</Link>}
       </div>
-      <div className="rv-date">{when(r.date)}{r.source && <span>{r.source}</span>}</div>
+      <div className="rv-date">{when(r.date)}{r.source && !r.name.toLowerCase().includes(r.source.toLowerCase()) && <span>{r.source}</span>}</div>
     </article>
+  );
+}
+
+const FracStars = ({ value }) => <span className="stars-frac" style={{ '--fill': `${(value / 5) * 100}%` }} role="img" aria-label={`${value} out of 5 stars`}>★★★★★</span>;
+
+function Ring({ value }) {
+  const r = 56, c = 2 * Math.PI * r;
+  return (
+    <div className="rv-ring">
+      <svg viewBox="0 0 128 128" aria-hidden="true">
+        <circle cx="64" cy="64" r={r} className="rv-ring-track" />
+        <circle cx="64" cy="64" r={r} className="rv-ring-arc" strokeDasharray={`${(c * value) / 5} ${c}`} transform="rotate(-90 64 64)" />
+      </svg>
+      <div><strong>{value.toFixed(1)}</strong><span>out of 5</span></div>
+    </div>
   );
 }
 
 function Summary({ data, onWrite }) {
   const { rated, average, dist, count } = data;
+  const top = Math.max(1, ...Object.values(dist));
   return (
     <div className="rv-summary">
-      <div className="rv-score">
-        {rated > 0 ? (
-          <>
-            <div className="rv-big">{average.toFixed(1)}</div>
-            <Stars n={Math.round(average)} />
-            <p>{count} review{count > 1 ? 's' : ''}{rated < count ? ` · ${rated} rated` : ''}</p>
-          </>
-        ) : (
-          <>
-            <div className="rv-big rv-count">{count}</div>
-            <p>customer {count === 1 ? 'message' : 'messages'}</p>
-          </>
-        )}
-      </div>
       {rated > 0 && (
-        <ul className="rv-bars" aria-label="Rating breakdown">
-          {[5, 4, 3, 2, 1].map((s) => (
-            <li key={s}><span>{s}</span><div><i style={{ width: `${(dist[s] / rated) * 100}%` }} /></div><em>{dist[s]}</em></li>
-          ))}
-        </ul>
+        <>
+          <Ring value={average} />
+          <div className="rv-meta">
+            <FracStars value={average} />
+            <p>Based on {rated} rating{rated > 1 ? 's' : ''}{count > rated ? ` · ${count} reviews` : ''}</p>
+            <ul className="rv-hist" aria-label="Rating breakdown">
+              {[5, 4, 3, 2, 1].map((s) => (
+                <li key={s}><em>{dist[s]}</em><b><i style={{ height: `${Math.max(8, (dist[s] / top) * 100)}%`, opacity: dist[s] ? 1 : 0.25 }} /></b><span>{s}★</span></li>
+              ))}
+            </ul>
+          </div>
+        </>
       )}
       {onWrite && <button className="btn btn-outline-light rv-write" onClick={onWrite}>Write a review</button>}
     </div>

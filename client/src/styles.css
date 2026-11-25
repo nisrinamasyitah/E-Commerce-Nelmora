@@ -633,16 +633,22 @@ legend { font-family: var(--serif); font-size: 1.45rem; margin-bottom: 1rem; pad
 .stars { color: var(--champagne); letter-spacing: .12em; white-space: nowrap; }
 .stars i { font-style: normal; opacity: .25; }
 
-.rv-summary { display: grid; grid-template-columns: auto minmax(0, 420px) auto; justify-content: center; align-items: center; gap: clamp(1.6rem, 5vw, 4.5rem); margin: 2.4rem auto 0; padding-bottom: clamp(2rem, 4vw, 3rem); border-bottom: 1px solid rgba(246, 240, 230, .16); max-width: 1000px; }
-.rv-score { text-align: center; display: flex; flex-direction: column; align-items: center; gap: .5rem; }
-.rv-score p { margin: 0; font-size: .85rem; color: rgba(246, 240, 230, .65); letter-spacing: .06em; }
-.rv-big { font-family: var(--sans); font-weight: 400; font-size: clamp(4rem, 8vw, 5.6rem); line-height: 1; color: var(--cream); }
-.rv-score .stars { font-size: 1.25rem; }
-.rv-bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .7rem; min-width: 0; }
-.rv-bars li { display: grid; grid-template-columns: 1rem 1fr 1.6rem; align-items: center; gap: .9rem; font-size: .9rem; color: rgba(246, 240, 230, .8); }
-.rv-bars div { height: 9px; border: 1px solid rgba(246, 240, 230, .7); border-radius: 99px; overflow: hidden; }
-.rv-bars i { display: block; height: 100%; background: var(--cream); border-radius: 99px; }
-.rv-bars em { font-style: normal; text-align: right; color: rgba(246, 240, 230, .6); }
+.rv-summary { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: clamp(1.6rem, 5vw, 4rem); margin: 2.2rem auto 0; padding-bottom: clamp(1.8rem, 4vw, 2.6rem); border-bottom: 1px solid rgba(246, 240, 230, .16); max-width: 1000px; }
+.rv-ring { position: relative; width: 148px; height: 148px; flex: none; }
+.rv-ring svg { width: 100%; height: 100%; }
+.rv-ring-track { fill: none; stroke: rgba(246, 240, 230, .14); stroke-width: 5; }
+.rv-ring-arc { fill: none; stroke: var(--champagne); stroke-width: 5; stroke-linecap: round; }
+.rv-ring div { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; }
+.rv-ring strong { font-family: var(--serif); font-weight: 400; font-size: 3rem; color: var(--cream); }
+.rv-ring span { margin-top: .45rem; font-size: .68rem; letter-spacing: .18em; text-transform: uppercase; color: rgba(246, 240, 230, .6); }
+.rv-meta { display: flex; flex-direction: column; gap: .5rem; align-items: flex-start; }
+.rv-meta p { margin: 0; font-size: .85rem; color: rgba(246, 240, 230, .65); letter-spacing: .04em; }
+.stars-frac { font-size: 1.7rem; letter-spacing: .14em; line-height: 1; background: linear-gradient(90deg, var(--champagne) var(--fill), rgba(246, 240, 230, .2) var(--fill)); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+.rv-hist { list-style: none; margin: .8rem 0 0; padding: 0; display: flex; align-items: flex-end; gap: .9rem; }
+.rv-hist li { display: flex; flex-direction: column; align-items: center; gap: .3rem; width: 2.4rem; font-size: .72rem; color: rgba(246, 240, 230, .65); }
+.rv-hist em { font-style: normal; font-size: .7rem; }
+.rv-hist b { display: flex; align-items: flex-end; width: 100%; height: 52px; }
+.rv-hist i { display: block; width: 100%; background: linear-gradient(180deg, var(--champagne), #a8814b); border-radius: 3px 3px 0 0; }
 .rv-write { white-space: nowrap; }
 
 .rv-list { max-width: 1000px; margin: 0 auto; }
@@ -677,8 +683,8 @@ legend { font-family: var(--serif); font-size: 1.45rem; margin-bottom: 1rem; pad
 .rv-form .stars { color: var(--wine); }
 
 @media (max-width: 800px) {
-  .rv-summary { grid-template-columns: 1fr; justify-items: center; }
-  .rv-bars { width: 100%; max-width: 360px; }
+  .rv-summary { flex-direction: column; text-align: center; }
+  .rv-meta { align-items: center; }
   .rv-write { width: 100%; max-width: 360px; }
   .rv-row { grid-template-columns: 1fr; gap: .6rem; padding: 1.5rem 0; }
   .rv-name { flex-direction: row; align-items: center; gap: .8rem; flex-wrap: wrap; }
