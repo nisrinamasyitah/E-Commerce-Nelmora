@@ -259,13 +259,13 @@ async function init() {
   // after that, Admin → Products is the source of truth. The settings row is the "already done" marker.
   const seedReviews = await db.run("INSERT OR IGNORE INTO settings (key, value) VALUES ('migration_reviews_1', 'true')");
   if (seedReviews.changes && (await db.get('SELECT COUNT(*) n FROM reviews')).n === 0) {
-    // Real feedback from customers, posted publicly on the shop's Instagram "review" highlight. No star ratings were given, so none are shown.
+    // Real feedback from customers, posted publicly on the shop's Instagram "review" highlight. No star ratings were given; they are shown as 5 stars at the shop's request.
     const quotes = [
       ['elara', 'Syahirah Zuhairi', 'hi. saja nak bagi feedback. elara ni wangi gila!', '2025-10-21'],
       ['horizon', 'Fauzi Ahmad', 'done repeat, catching new scents for men. last time cuba the horizon, bau dia clean and soft. tidak menusuk hidung. just chill and suitable for indoor. so now just get all lineup for men hahaha.', '2025-11-09'],
     ];
     await client.batch(quotes.map(([slug, name, body, date]) => ({
-      sql: "INSERT INTO reviews (product_id, name, rating, body, source, reviewed_at, published) VALUES ((SELECT id FROM products WHERE slug = ?), ?, 0, ?, '', ?, 1)",
+      sql: "INSERT INTO reviews (product_id, name, rating, body, source, reviewed_at, published) VALUES ((SELECT id FROM products WHERE slug = ?), ?, 5, ?, '', ?, 1)",
       args: [slug, name, body, date],
     })), 'write');
   }
@@ -281,7 +281,7 @@ async function init() {
       ['Jason Lim', 'Smells fresh and mature. Definitely my kind of fragrance.', '2026-06-27'],
     ];
     await client.batch(quotes.map(([name, body, date]) => ({
-      sql: "INSERT INTO reviews (product_id, name, rating, body, source, reviewed_at, published) VALUES ((SELECT id FROM products WHERE slug = 'horizon'), ?, 0, ?, '', ?, 1)",
+      sql: "INSERT INTO reviews (product_id, name, rating, body, source, reviewed_at, published) VALUES ((SELECT id FROM products WHERE slug = 'horizon'), ?, 5, ?, '', ?, 1)",
       args: [name, body, date],
     })), 'write');
   }
@@ -383,12 +383,21 @@ async function init() {
       for (const [name, body, dmy] of list) {
         const [d, m, y] = dmy.split('/');
         stmts.push({
-          sql: "INSERT INTO reviews (product_id, name, rating, body, source, reviewed_at, published) VALUES ((SELECT id FROM products WHERE slug = ?), ?, 0, ?, '', ?, 1)",
+          sql: "INSERT INTO reviews (product_id, name, rating, body, source, reviewed_at, published) VALUES ((SELECT id FROM products WHERE slug = ?), ?, 5, ?, '', ?, 1)",
           args: [slug, name, body, `${y}-${m}-${d}`],
         });
       }
     }
     await client.batch(stmts, 'write');
+  }
+  // One-time fix for databases seeded before the wording changed: Elara and Horizon names/text, no "Instagram" label, and every review gets 5 stars.
+  const fixReviews = await db.run("INSERT OR IGNORE INTO settings (key, value) VALUES ('migration_reviews_4', 'true')");
+  if (fixReviews.changes) {
+    await client.batch([
+      { sql: "UPDATE reviews SET name = 'Syahirah Zuhairi', body = 'hi. saja nak bagi feedback. elara ni wangi gila!', source = '' WHERE reviewed_at = '2025-10-21' AND product_id = (SELECT id FROM products WHERE slug = 'elara') AND name IN ('Pelanggan Instagram', 'Syahirah Zuhairi')", args: [] },
+      { sql: "UPDATE reviews SET name = 'Fauzi Ahmad', source = '' WHERE reviewed_at = '2025-11-09' AND product_id = (SELECT id FROM products WHERE slug = 'horizon') AND name IN ('Pojiah', 'Fauzi Ahmad')", args: [] },
+      { sql: "UPDATE reviews SET rating = 5 WHERE rating = 0", args: [] },
+    ], 'write');
   }
   const mark = await db.run("INSERT OR IGNORE INTO settings (key, value) VALUES ('migration_bestsellers_1', 'true')");
   if (mark.changes) {
