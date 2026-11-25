@@ -691,3 +691,8 @@ legend { font-family: var(--serif); font-size: 1.45rem; margin-bottom: 1rem; pad
   .rv-date { text-align: left; flex-direction: row; gap: .8rem; }
   .rv-verify-grid { grid-template-columns: 1fr; }
 }
+
+/* review request on the order page */
+.order-review h3 { margin: 0 0 .3rem; font-family: var(--serif); font-weight: 500; font-size: 1.35rem; }
+.order-review-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .8rem; padding: .9rem 0; border-top: 1px solid var(--line); }
+.order-review-row .rv-form { flex: 0 0 100%; margin: .6rem 0 0; max-width: none; border: 1px solid var(--line); }

@@ -31,6 +31,8 @@ function OrderDetail({ id, onChanged }) {
 
   if (!o || !form) return <div className="a-detail"><p className="muted">{msg || 'Loading…'}</p></div>;
   const phone = o.phone.replace(/\D/g, '').replace(/^0/, '60');
+  const reviewLink = `${window.location.origin}/order/${o.code}?t=${encodeURIComponent(o.token)}#review`;
+  const reviewMsg = `Hi ${o.name.split(' ')[0]}, thank you for shopping with Nelmora 🤍 Kalau sudi, boleh share pendapat tentang wangian anda di sini (ambil masa seminit je): ${reviewLink}`;
   const shipMsg = `Hi ${o.name}, your Nelmora order ${o.code} has been shipped!${o.tracking ? ` Tracking number: ${o.tracking}` : ''} Thank you for shopping with us.`;
 
   return (
@@ -45,6 +47,7 @@ function OrderDetail({ id, onChanged }) {
         {o.payment_status !== 'paid' && <button className="btn btn-sm" disabled={busy} onClick={() => save({ payment_status: 'paid', status: form.status === 'new' ? 'processing' : form.status })}>Mark paid</button>}
         {o.status !== 'shipped' && o.status !== 'cancelled' && o.status !== 'completed' && <button className="btn btn-sm btn-ghost" disabled={busy} onClick={() => save({ status: 'shipped' })}>Mark shipped</button>}
         <a className="btn btn-sm btn-ghost" href={waLink(phone, o.status === 'shipped' ? shipMsg : `Hi ${o.name}, this is Nelmora Parfums about your order ${o.code}.`)} target="_blank" rel="noreferrer">WhatsApp customer</a>
+        {(o.status === 'shipped' || o.status === 'completed') && o.payment_status === 'paid' && <a className="btn btn-sm btn-ghost" href={waLink(phone, reviewMsg)} target="_blank" rel="noreferrer">Ask for a review</a>}
       </div>
 
       <ul className="a-items">

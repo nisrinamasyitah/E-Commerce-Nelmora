@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useStore } from '../store';
 import { api, rm, waLink, useTitle } from '../lib';
+import { ReviewForm } from '../components/Reviews';
 
 const STEPS = ['new', 'processing', 'shipped', 'completed'];
 const LABEL = { new: 'Order received', processing: 'Preparing', shipped: 'Shipped', completed: 'Delivered', cancelled: 'Cancelled' };
@@ -17,6 +18,7 @@ export default function Order() {
   const [lookup, setLookup] = useState({ code: code || '', email: '' });
   const [loading, setLoading] = useState(false);
   const t = params.get('t');
+  const [reviewing, setReviewing] = useState(null); // slug being reviewed
 
   useEffect(() => {
     if (!code || !t) return;
@@ -102,6 +104,32 @@ export default function Order() {
       )}
 
       {order.tracking && <p className="notice">Tracking number: <strong className="mono">{order.tracking}</strong></p>}
+
+      {order.payment_status === 'paid' && ['shipped', 'completed'].includes(order.status) && (() => {
+        const scents = [...new Map(order.items.filter((i) => i.slug).map((i) => [i.slug, i.name])).entries()];
+        if (!scents.length) return null;
+        const token = t || null;
+        return (
+          <section className="order-box order-review" id="review">
+            <h3>How is your fragrance?</h3>
+            <p className="muted small">Share your thoughts to help others choose. Your review will carry a Verified buyer label.</p>
+            {scents.map(([slug, name]) => {
+              const done = order.reviewed?.includes(slug);
+              return (
+                <div key={slug} className="order-review-row">
+                  <strong>{name}</strong>
+                  {done ? <span className="muted small">Reviewed. Thank you!</span> : reviewing === slug ? null : <button className="btn btn-sm btn-ghost" onClick={() => setReviewing(slug)}>Write a review</button>}
+                  {reviewing === slug && !done && (
+                    <ReviewForm slug={slug} productName={name} order={{ code: order.code, token, name: (order.name || '').split(' ')[0] }}
+                      onClose={() => { setReviewing(null); api(`/orders/${order.code}?t=${encodeURIComponent(t || '')}`).then(setOrder).catch(() => {}); }} />
+                  )}
+                </div>
+              );
+            })}
+            {!t && <p className="muted small">To review from here, open the link we sent you for this order.</p>}
+          </section>
+        );
+      })()}
 
       <section className="order-box">
         <ul className="sum-items">

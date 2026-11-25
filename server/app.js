@@ -330,7 +330,35 @@ app.get('/api/orders/:code', async (req, res) => {
       if (s.payment_status === 'paid') await markPaid(o.code, s.id);
     } catch (e) { console.error('Stripe lookup failed:', e.message); }
   }
-  res.json(publicOrder(await orderWithItems(db, await db.get('SELECT * FROM orders WHERE id = ?', [o.id]))));
+  const full = publicOrder(await orderWithItems(db, await db.get('SELECT * FROM orders WHERE id = ?', [o.id])));
+  const done = await db.all('SELECT p.slug FROM reviews r JOIN products p ON p.id = r.product_id WHERE r.order_id = ?', [o.id]);
+  res.json({ ...full, reviewed: done.map((d) => d.slug) });
+});
+
+// A customer reviews a scent from their own order page (secure link or order number + email). Always a Verified buyer.
+app.post('/api/orders/:code/review', async (req, res) => {
+  const b = req.body || {};
+  const o = await db.get('SELECT * FROM orders WHERE code = ?', [String(req.params.code).toUpperCase()]);
+  const t = String(b.t || '');
+  const email = String(b.email || '').trim().toLowerCase();
+  const ok = o && ((t && t.length === o.token.length && crypto.timingSafeEqual(Buffer.from(t), Buffer.from(o.token))) || (email && email === o.email));
+  if (!ok) return res.status(404).json({ error: 'We could not find that order.' });
+  if (o.payment_status !== 'paid' || !['shipped', 'completed'].includes(o.status)) return res.status(400).json({ error: 'You can review your order once it has shipped.' });
+  const key = `review:${clientIp(req)}`;
+  if (await blocked(key, 10, 3600_000)) return res.status(429).json({ error: 'Too many reviews from this connection. Please try again later.' });
+  const product = await db.get(`SELECT DISTINCT p.id FROM order_items oi JOIN variants v ON v.id = oi.variant_id JOIN products p ON p.id = v.product_id
+    WHERE oi.order_id = ? AND p.slug = ?`, [o.id, clean(b.product, 80)]);
+  if (!product) return res.status(400).json({ error: 'That scent is not in this order.' });
+  if (await db.get('SELECT 1 x FROM reviews WHERE order_id = ? AND product_id = ?', [o.id, product.id])) return res.status(400).json({ error: 'You have already reviewed this scent. Thank you!' });
+  const name = clean(b.name, 60), body = clean(b.body, 1000), rating = Math.round(Number(b.rating));
+  if (!name) return res.status(400).json({ error: 'Please enter your name.' });
+  if (!(rating >= 1 && rating <= 5)) return res.status(400).json({ error: 'Please choose 1 to 5 stars.' });
+  if (body.length < 10) return res.status(400).json({ error: 'Please write a little more (at least 10 characters).' });
+  if (/https?:\/\/|www\.|\.(com|net|org|my|xyz|shop)\b/i.test(body + ' ' + name)) return res.status(400).json({ error: 'Please leave links out of your review.' });
+  await hit(key);
+  await db.run("INSERT INTO reviews (product_id, name, rating, body, source, reviewed_at, published, pending, verified, email, order_id) VALUES (?, ?, ?, ?, 'Website', date('now'), 1, 0, 1, ?, ?)",
+    [product.id, name, rating, body, o.email, o.id]);
+  res.json({ ok: true, verified: true });
 });
 
 app.post('/api/contact', async (req, res) => {

@@ -62,22 +62,23 @@ function Summary({ data, onWrite }) {
   );
 }
 
-function ReviewForm({ slug, productName, onClose }) {
-  const [f, setF] = useState({ name: '', rating: 0, body: '', email: '', order: '', website: '' });
+export function ReviewForm({ slug, productName, onClose, order }) {
+  // `order` = { code, token, name } when reviewing from an order page: the order proves it is a real purchase
+  const [f, setF] = useState({ name: order?.name || '', rating: 0, body: '', email: '', order: '', website: '' });
   const [state, setState] = useState({ busy: false, error: '', done: null });
   const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
   async function submit(e) {
     e.preventDefault();
     if (!f.rating) return setState({ busy: false, error: 'Please choose your star rating.', done: null });
     setState({ busy: true, error: '', done: null });
-    try { const r = await api('/reviews', { method: 'POST', body: { ...f, product: slug } }); setState({ busy: false, error: '', done: r }); }
+    try { const r = order ? await api(`/orders/${encodeURIComponent(order.code)}/review`, { method: 'POST', body: { t: order.token, name: f.name, rating: f.rating, body: f.body, product: slug } }) : await api('/reviews', { method: 'POST', body: { ...f, product: slug } }); setState({ busy: false, error: '', done: r }); }
     catch (err) { setState({ busy: false, error: err.message, done: null }); }
   }
   if (state.done) {
     return (
       <div className="rv-form rv-thanks" role="status">
         <h3>Terima kasih! Thank you.</h3>
-        <p>Your review of {productName} is now live.{f.email && f.order && !state.done.verified ? ' We could not match that order number, so it will not carry the Verified buyer label.' : ''}</p>
+        <p>Your review of {productName} is now live{order ? ' with a Verified buyer label' : ''}.{!order && f.email && f.order && !state.done.verified ? ' We could not match that order number, so it will not carry the Verified buyer label.' : ''}</p>
         <button className="btn btn-ghost" onClick={onClose}>Close</button>
       </div>
     );
@@ -98,15 +99,15 @@ function ReviewForm({ slug, productName, onClose }) {
         <textarea rows="5" value={f.body} onChange={(e) => set('body', e.target.value)} maxLength="1000" required placeholder="Ceritakan pengalaman anda: wangi, tahan lama, packaging… / Tell us how it wears." />
         <em className="rv-count-hint">{f.body.length}/1000</em>
       </label>
-      <details className="rv-verify">
+      {!order && <details className="rv-verify">
         <summary>Bought from us? Get a Verified buyer label</summary>
         <div className="rv-verify-grid">
           <label className="field"><span>Order number</span><input value={f.order} onChange={(e) => set('order', e.target.value)} placeholder="NM-XXXXXX" /></label>
           <label className="field"><span>Email used for the order</span><input type="email" value={f.email} onChange={(e) => set('email', e.target.value)} /></label>
         </div>
         <p className="muted small">We only use this to check your order. Your email is never shown.</p>
-      </details>
-      <input className="rv-hp" tabIndex="-1" autoComplete="off" aria-hidden="true" value={f.website} onChange={(e) => set('website', e.target.value)} name="website" />
+      </details>}
+      {!order && <input className="rv-hp" tabIndex="-1" autoComplete="off" aria-hidden="true" value={f.website} onChange={(e) => set('website', e.target.value)} name="website" />}
       {state.error && <p className="alert">{state.error}</p>}
       <div className="rv-actions">
         <button className="btn" disabled={state.busy}>{state.busy ? 'Sending…' : 'Submit review'}</button>
