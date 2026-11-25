@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib';
 
@@ -31,9 +31,9 @@ function Ring({ value }) {
     <div className="rv-ring">
       <svg viewBox="0 0 128 128" aria-hidden="true">
         <circle cx="64" cy="64" r={r} className="rv-ring-track" />
-        <circle cx="64" cy="64" r={r} className="rv-ring-arc" strokeDasharray={`${(c * value) / 5} ${c}`} transform="rotate(-90 64 64)" />
+        {value > 0 && <circle cx="64" cy="64" r={r} className="rv-ring-arc" strokeDasharray={`${(c * value) / 5} ${c}`} transform="rotate(-90 64 64)" />}
       </svg>
-      <div><strong>{value.toFixed(1)}</strong><span>out of 5</span></div>
+      <div><strong>{value > 0 ? value.toFixed(1) : '–'}</strong><span>{value > 0 ? 'out of 5' : 'no ratings'}</span></div>
     </div>
   );
 }
@@ -41,28 +41,30 @@ function Ring({ value }) {
 function Summary({ data, onWrite }) {
   const { rated, average, dist, count } = data;
   const top = Math.max(1, ...Object.values(dist));
+  if (!rated && !onWrite) return null;
   return (
     <div className="rv-summary">
-      {rated > 0 && (
-        <>
-          <Ring value={average} />
-          <div className="rv-meta">
-            <FracStars value={average} />
+      <Ring value={rated > 0 ? average : 0} />
+      <div className="rv-meta">
+        <FracStars value={rated > 0 ? average : 0} />
+        {rated === 0 && <p>Be the first to rate this scent</p>}
+        {rated > 0 && (
+          <>
             <p>Based on {rated} rating{rated > 1 ? 's' : ''}{count > rated ? ` · ${count} reviews` : ''}</p>
             <ul className="rv-hist" aria-label="Rating breakdown">
               {[5, 4, 3, 2, 1].map((s) => (
                 <li key={s}><em>{dist[s]}</em><b><i style={{ height: `${Math.max(8, (dist[s] / top) * 100)}%`, opacity: dist[s] ? 1 : 0.25 }} /></b><span>{s}★</span></li>
               ))}
             </ul>
-          </div>
-        </>
-      )}
+          </>
+        )}
+      </div>
       {onWrite && <button className="btn btn-outline-light rv-write" onClick={onWrite}>Write a review</button>}
     </div>
   );
 }
 
-export function ReviewForm({ slug, productName, onClose, order }) {
+export function ReviewForm({ slug, productName, onClose, order, onSubmitted }) {
   // `order` = { code, token, name } when reviewing from an order page: the order proves it is a real purchase
   const [f, setF] = useState({ name: order?.name || '', rating: 0, body: '', email: '', order: '', website: '' });
   const [state, setState] = useState({ busy: false, error: '', done: null });
@@ -71,7 +73,7 @@ export function ReviewForm({ slug, productName, onClose, order }) {
     e.preventDefault();
     if (!f.rating) return setState({ busy: false, error: 'Please choose your star rating.', done: null });
     setState({ busy: true, error: '', done: null });
-    try { const r = order ? await api(`/orders/${encodeURIComponent(order.code)}/review`, { method: 'POST', body: { t: order.token, name: f.name, rating: f.rating, body: f.body, product: slug } }) : await api('/reviews', { method: 'POST', body: { ...f, product: slug } }); setState({ busy: false, error: '', done: r }); }
+    try { const r = order ? await api(`/orders/${encodeURIComponent(order.code)}/review`, { method: 'POST', body: { t: order.token, name: f.name, rating: f.rating, body: f.body, product: slug } }) : await api('/reviews', { method: 'POST', body: { ...f, product: slug } }); setState({ busy: false, error: '', done: r }); onSubmitted?.(); }
     catch (err) { setState({ busy: false, error: err.message, done: null }); }
   }
   if (state.done) {
@@ -119,15 +121,12 @@ export function ReviewForm({ slug, productName, onClose, order }) {
 
 // Customer reviews. `slug` = one scent (always shown there, so people can write one); no slug = latest across the shop
 // (home page), hidden until there is at least one. Reviews are entered by the owner in Admin or submitted by customers and approved.
-export default function Reviews({ slug, productName, limit, title = 'What customers say', eyebrow = 'Reviews' }) {
+export default function Reviews({ slug, productName, limit, title = 'Customer reviews', eyebrow = 'Reviews' }) {
   const [data, setData] = useState(null);
   const [writing, setWriting] = useState(false);
   const [all, setAll] = useState(false);
-  useEffect(() => {
-    let live = true;
-    api(`/reviews${slug ? `?product=${encodeURIComponent(slug)}` : ''}`).then((d) => live && setData(d)).catch(() => {});
-    return () => { live = false; };
-  }, [slug]);
+  const load = useCallback(() => api(`/reviews${slug ? `?product=${encodeURIComponent(slug)}` : ''}`).then(setData).catch(() => {}), [slug]);
+  useEffect(() => { load(); }, [load]);
   if (!data) return null;
   if (!data.count && !slug) return null;
   const cap = limit || (all ? 100 : 6);
@@ -146,7 +145,7 @@ export default function Reviews({ slug, productName, limit, title = 'What custom
             <button className="btn btn-outline-light" onClick={() => setWriting(true)}>Write a review</button>
           </div>
         )}
-        {writing && slug && <ReviewForm slug={slug} productName={productName} onClose={() => setWriting(false)} />}
+        {writing && slug && <ReviewForm slug={slug} productName={productName} onClose={() => setWriting(false)} onSubmitted={load} />}
         {data.count > 0 && (
           <div className="rv-list">{list.map((r) => <Row key={r.id} r={r} showScent={!slug} />)}</div>
         )}
