@@ -261,7 +261,7 @@ async function init() {
   if (seedReviews.changes && (await db.get('SELECT COUNT(*) n FROM reviews')).n === 0) {
     // Real feedback from customers, posted publicly on the shop's Instagram "review" highlight. No star ratings were given, so none are shown.
     const quotes = [
-      ['elara', 'Pelanggan Instagram', 'hi. saja nak bagi feedback. elara ni wangi gila! cuma maybe boleh improve dari segi packaging sebab agak leaking.', '2025-10-21'],
+      ['elara', 'Syahirah Zuhairi', 'hi. saja nak bagi feedback. elara ni wangi gila!', '2025-10-21'],
       ['horizon', 'Pojiah', 'done repeat, catching new scents for men. last time cuba the horizon, bau dia clean and soft. tidak menusuk hidung. just chill and suitable for indoor. so now just get all lineup for men hahaha.', '2025-11-09'],
     ];
     await client.batch(quotes.map(([slug, name, body, date]) => ({
