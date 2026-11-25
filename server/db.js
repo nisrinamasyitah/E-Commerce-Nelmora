@@ -163,7 +163,7 @@ const DEFAULT_SETTINGS = {
   bank_account_name: 'NELMORA GROUP EMPIRE',
   bank_account_no: '5686 0314 0816',
   whatsapp: '60176304903',     // international format, digits only
-  contact_email: 'hello@nelmoraparfums.com',
+  contact_email: 'nelmoragroup@gmail.com',
   instagram: 'nelmorahq',
   announcement: 'Free shipping in Malaysia for orders RM150 and above',
   welcome_discount: 1000,      // welcome offer: sen off a first order (0 = offer switched off, popup hidden)
@@ -398,6 +398,11 @@ async function init() {
       { sql: "UPDATE reviews SET name = 'Fauzi Ahmad', source = '' WHERE reviewed_at = '2025-11-09' AND product_id = (SELECT id FROM products WHERE slug = 'horizon') AND name IN ('Pojiah', 'Fauzi Ahmad')", args: [] },
       { sql: "UPDATE reviews SET rating = 5 WHERE rating = 0", args: [] },
     ], 'write');
+  }
+  // One-time: the shop's contact email changed. Only replaces the old default, so an email you typed in Admin → Settings is left alone.
+  const mailFix = await db.run("INSERT OR IGNORE INTO settings (key, value) VALUES ('migration_contact_email_1', 'true')");
+  if (mailFix.changes) {
+    await db.run("UPDATE settings SET value = ? WHERE key = 'contact_email' AND value = ?", [JSON.stringify('nelmoragroup@gmail.com'), JSON.stringify('hello@nelmoraparfums.com')]);
   }
   const mark = await db.run("INSERT OR IGNORE INTO settings (key, value) VALUES ('migration_bestsellers_1', 'true')");
   if (mark.changes) {
