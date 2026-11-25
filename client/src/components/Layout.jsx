@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useStore } from '../store';
 import { rm } from '../lib';
@@ -49,7 +49,29 @@ export default function Layout() {
   const shopFor = new URLSearchParams(qs).get('for') || '';
   const isHome = pathname === '/';
 
-  useEffect(() => { window.scrollTo(0, 0); setMenu(false); setSearch(false); }, [pathname]);
+  // Go to the top when moving to another page, but NOT on a browser refresh (so a refresh stays where you were).
+  const lastPath = useRef(pathname);
+  const firstLoad = useRef(true);
+  useEffect(() => {
+    if (lastPath.current !== pathname) { lastPath.current = pathname; firstLoad.current = false; window.scrollTo(0, 0); }
+    setMenu(false); setSearch(false);
+  }, [pathname]);
+  // Remember where you were, and after a refresh keep trying until the page (which loads its content a moment later) is tall enough.
+  useEffect(() => {
+    const key = `nm-scroll:${pathname}`;
+    const save = () => sessionStorage.setItem(key, String(Math.round(window.scrollY)));
+    window.addEventListener('scroll', save, { passive: true });
+    const isReload = firstLoad.current && performance.getEntriesByType?.('navigation')?.[0]?.type === 'reload';
+    const target = isReload ? Number(sessionStorage.getItem(key)) || 0 : 0;
+    let tries = 0, timer;
+    const restore = () => {
+      if (!target || tries++ > 30) return;
+      window.scrollTo(0, target);
+      if (Math.abs(window.scrollY - target) > 2) timer = setTimeout(restore, 100);
+    };
+    restore();
+    return () => { window.removeEventListener('scroll', save); clearTimeout(timer); };
+  }, [pathname]);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
     onScroll();
