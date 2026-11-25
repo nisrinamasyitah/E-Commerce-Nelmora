@@ -285,6 +285,111 @@ async function init() {
       args: [name, body, date],
     })), 'write');
   }
+  // One-time: six reviews for each of the other 11 products, from customer feedback (sent by staff). Dates are written dd/mm/yyyy.
+  const seedRest = await db.run("INSERT OR IGNORE INTO settings (key, value) VALUES ('migration_reviews_3', 'true')");
+  if (seedRest.changes) {
+    const byProduct = {
+      delusion: [
+        ['Haziq Rahman', 'Bau tea dia unik, ada fresh citrus touch. Very interesting!', '13/02/2026'],
+        ['Wei Jian', 'Quite different from biasa punya perfume. Love the woody smell.', '24/03/2026'],
+        ['Aiman Danish', 'Smell dia calm and sophisticated, memang nice.', '07/04/2026'],
+        ['Ravi Menon', 'The combination of tea and wood smells really classy.', '18/05/2026'],
+        ['Syafiq Azman', 'Ada fresh and warm feeling at the same time. I like it!', '09/06/2026'],
+        ['Nicholas Wong', 'Very unique scent, not too sweet and smells gentleman-like.', '21/07/2026'],
+      ],
+      onyx: [
+        ['Aqil Firdaus', 'Bau dia warm and sweet, macam chocolate sikit. Nice!', '04/03/2026'],
+        ['Bryan Lee', 'Love this cocoa scent. Smells rich and quite luxurious.', '16/04/2026'],
+        ['Danish Hakim', 'Sweet but still masculine. Memang lain daripada yang lain.', '28/05/2026'],
+        ['Kavin Raj', 'The tonka bean gives a really smooth and warm smell.', '10/06/2026'],
+        ['Irfan Syah', 'Kalau suka sweet fragrance, this one memang worth trying.', '23/07/2026'],
+        ['Marcus Tan', 'Smells cozy and rich. Perfect for someone who likes warm scents.', '06/08/2026'],
+      ],
+      'victus-cologne': [
+        ['Adam Hakimi', 'Fresh gila! Bau macam clean and baru lepas mandi.', '17/01/2026'],
+        ['Kevin Chong', 'Really love the marine scent. Very refreshing!', '09/02/2026'],
+        ['Hakim Danish', 'Citrus dia gives a nice fresh feeling. Perfect for daytime.', '25/03/2026'],
+        ['Arvind Kumar', 'Smells sporty and energetic. Memang nice for daily wear.', '12/04/2026'],
+        ['Fikri Azlan', 'Fresh ocean vibe with a little earthy touch. Love it!', '20/05/2026'],
+        ['Ethan Lim', 'Not too heavy, very refreshing and easy to wear.', '03/06/2026'],
+      ],
+      valentus: [
+        ['Rizal Hakim', 'Smell dia fresh but ada masculine touch. Very classy!', '11/02/2026'],
+        ['Jun Hao', 'Love the musk combination. Bau dia smooth and clean.', '26/03/2026'],
+        ['Amirul Danish', 'Bergamot dia gives a refreshing first impression. Nice!', '08/04/2026'],
+        ['Prakash Nair', 'Smells elegant and mature. Suitable for formal occasions.', '19/05/2026'],
+        ['Afiq Rahman', 'Ada fresh and earthy notes, memang sedap bau dia.', '02/06/2026'],
+        ['Darren Goh', 'Clean, musky and sophisticated. Definitely a good choice.', '15/07/2026'],
+      ],
+      'caffe-latte': [
+        ['Haikal Firdaus', 'Bau coffee dia memang best, macam fresh latte!', '06/03/2026'],
+        ['Aaron Lim', 'Love the coffee and vanilla combination. So warm and sweet.', '18/04/2026'],
+        ['Syazwan Hakim', 'Smells like a cozy coffee shop. Memang unik!', '09/05/2026'],
+        ['Viknesh Kumar', 'The cocoa makes it smell richer. Quite addictive!', '23/06/2026'],
+        ['Faiz Danish', 'Sweet coffee scent, not something you smell everyday.', '14/07/2026'],
+        ['Raymond Tan', 'Kalau suka bau coffee, this one memang kena try!', '27/08/2026'],
+      ],
+      elara: [
+        ['Aina Sofea', 'Bau dia sweet macam marshmallow, so soft and lovely!', '12/01/2026'],
+        ['Chloe Tan', 'Such a cute sweet scent. Love the vanilla smell!', '25/02/2026'],
+        ['Nur Alya', 'Smells like sugary desserts, memang sweet sangat!', '07/03/2026'],
+        ['Priya Sharma', 'Very soft and creamy. Perfect for sweet scent lovers.', '16/04/2026'],
+        ['Nadia Izzati', 'Bau dia macam cotton candy, so comforting!', '29/05/2026'],
+        ['Mei Xin', 'Sweet, playful and feminine. I really like this one.', '10/06/2026'],
+      ],
+      'strawberry-kiss': [
+        ['Farah Nabila', 'Bau strawberry dia sweet and fruity, suka sangat!', '09/02/2026'],
+        ['Samantha Lee', 'Smells like fresh strawberries. So lovely!', '21/03/2026'],
+        ['Irdina Sofea', 'Fruity but ada woody touch. Quite unique!', '04/04/2026'],
+        ['Kavitha Devi', 'Such a pretty scent, sweet but not too childish.', '17/05/2026'],
+        ['Bella Amir', 'Love how the strawberry smell blends with cedarwood.', '26/06/2026'],
+        ['Grace Wong', 'Fresh, fruity and feminine. Definitely my type!', '08/07/2026'],
+      ],
+      aura: [
+        ['Nur Amirah', 'Bau dia soft and powdery, macam baby scent. Love it!', '15/01/2026'],
+        ['Jasmine Lim', 'Very clean and comforting. So elegant!', '03/02/2026'],
+        ['Siti Hajar', 'Vanilla dia lembut, tak terlalu manis. Memang suka.', '19/03/2026'],
+        ['Anusha Raj', 'Smells smooth and delicate. Perfect for everyday wear.', '27/04/2026'],
+        ['Mira Qistina', 'Such a gentle scent, gives a clean girl vibe!', '06/05/2026'],
+        ['Rachel Tan', 'Soft, musky and powdery. Very feminine and classy.', '22/06/2026'],
+      ],
+      'sweet-roma': [
+        ['Diyana Sofea', 'Vanilla dia sweet and warm, memang sedap!', '07/03/2026'],
+        ['Michelle Wong', 'Love the black currant touch. Gives a fruity twist!', '20/04/2026'],
+        ['Nur Iman', 'Smells sweet but ada sedikit woody feel. So elegant!', '11/05/2026'],
+        ['Shalini Devi', 'Very rich and warm. Perfect for someone who loves sweet scents.', '24/06/2026'],
+        ['Aqilah Maisara', 'Bau dia macam luxurious dessert, love this!', '09/07/2026'],
+        ['Olivia Tan', 'The fruity and vanilla combination is really beautiful.', '18/08/2026'],
+      ],
+      'noir-berry': [
+        ['Nurin Aisyah', 'Berry scent dia sweet and juicy, memang best!', '16/02/2026'],
+        ['Ashley Lim', 'Love the fruity opening with that soft vanilla smell.', '05/03/2026'],
+        ['Izzah Nadia', 'Bau dia sweet but ada mysterious woody touch.', '23/04/2026'],
+        ['Divya Kumar', 'Very unique combination, fruity but still elegant.', '12/05/2026'],
+        ['Sabrina Lee', 'Smells rich and feminine. Definitely love the berry notes!', '28/06/2026'],
+        ['Hana Maisarah', 'Sweet, warm and a little mysterious. So pretty!', '14/07/2026'],
+      ],
+      'citrus-muse': [
+        ['Nadhirah Amani', 'Fresh citrus smell, memang sesuai untuk cuaca Malaysia!', '10/03/2026'],
+        ['Amanda Tan', 'Love how refreshing and clean this fragrance feels.', '22/04/2026'],
+        ['Nurul Syafiqa', 'Citrus dia fresh, with a soft musky finish. Nice!', '06/05/2026'],
+        ['Pavithra Nair', 'Very refreshing but still has an elegant touch.', '19/06/2026'],
+        ['Sofea Balqis', 'Bau dia clean and classy, perfect for daily use.', '02/07/2026'],
+        ['Nicole Wong', 'The sandalwood makes it smell smooth and sophisticated.', '25/08/2026'],
+      ],
+    };
+    const stmts = [];
+    for (const [slug, list] of Object.entries(byProduct)) {
+      for (const [name, body, dmy] of list) {
+        const [d, m, y] = dmy.split('/');
+        stmts.push({
+          sql: "INSERT INTO reviews (product_id, name, rating, body, source, reviewed_at, published) VALUES ((SELECT id FROM products WHERE slug = ?), ?, 0, ?, '', ?, 1)",
+          args: [slug, name, body, `${y}-${m}-${d}`],
+        });
+      }
+    }
+    await client.batch(stmts, 'write');
+  }
   const mark = await db.run("INSERT OR IGNORE INTO settings (key, value) VALUES ('migration_bestsellers_1', 'true')");
   if (mark.changes) {
     const best = ['victus-cologne', 'horizon', 'elara', 'aura'];
