@@ -262,10 +262,10 @@ async function init() {
     // Real feedback from customers, posted publicly on the shop's Instagram "review" highlight. No star ratings were given, so none are shown.
     const quotes = [
       ['elara', 'Syahirah Zuhairi', 'hi. saja nak bagi feedback. elara ni wangi gila!', '2025-10-21'],
-      ['horizon', 'Pojiah', 'done repeat, catching new scents for men. last time cuba the horizon, bau dia clean and soft. tidak menusuk hidung. just chill and suitable for indoor. so now just get all lineup for men hahaha.', '2025-11-09'],
+      ['horizon', 'Fauzi Ahmad', 'done repeat, catching new scents for men. last time cuba the horizon, bau dia clean and soft. tidak menusuk hidung. just chill and suitable for indoor. so now just get all lineup for men hahaha.', '2025-11-09'],
     ];
     await client.batch(quotes.map(([slug, name, body, date]) => ({
-      sql: "INSERT INTO reviews (product_id, name, rating, body, source, reviewed_at, published) VALUES ((SELECT id FROM products WHERE slug = ?), ?, 0, ?, 'Instagram', ?, 1)",
+      sql: "INSERT INTO reviews (product_id, name, rating, body, source, reviewed_at, published) VALUES ((SELECT id FROM products WHERE slug = ?), ?, 0, ?, '', ?, 1)",
       args: [slug, name, body, date],
     })), 'write');
   }
