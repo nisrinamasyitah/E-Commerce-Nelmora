@@ -256,6 +256,18 @@ async function init() {
 
   // One-time: bestsellers are Victus Cologne, Horizon, Elara, Aura (in that order). Runs once per database;
   // after that, Admin → Products is the source of truth. The settings row is the "already done" marker.
+  const seedReviews = await db.run("INSERT OR IGNORE INTO settings (key, value) VALUES ('migration_reviews_1', 'true')");
+  if (seedReviews.changes && (await db.get('SELECT COUNT(*) n FROM reviews')).n === 0) {
+    // Real feedback from customers, posted publicly on the shop's Instagram "review" highlight. No star ratings were given, so none are shown.
+    const quotes = [
+      ['elara', 'Pelanggan Instagram', 'hi. saja nak bagi feedback. elara ni wangi gila! cuma maybe boleh improve dari segi packaging sebab agak leaking.', '2025-10-21'],
+      ['horizon', 'Pojiah', 'done repeat, catching new scents for men. last time cuba the horizon, bau dia clean and soft. tidak menusuk hidung. just chill and suitable for indoor. so now just get all lineup for men hahaha.', '2025-11-09'],
+    ];
+    await client.batch(quotes.map(([slug, name, body, date]) => ({
+      sql: "INSERT INTO reviews (product_id, name, rating, body, source, reviewed_at, published) VALUES ((SELECT id FROM products WHERE slug = ?), ?, 0, ?, 'Instagram', ?, 1)",
+      args: [slug, name, body, date],
+    })), 'write');
+  }
   const mark = await db.run("INSERT OR IGNORE INTO settings (key, value) VALUES ('migration_bestsellers_1', 'true')");
   if (mark.changes) {
     const best = ['victus-cologne', 'horizon', 'elara', 'aura'];

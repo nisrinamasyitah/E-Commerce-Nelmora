@@ -214,8 +214,9 @@ app.get('/api/reviews', async (req, res) => {
     slug ? [slug] : [],
   );
   const reviews = rows.map((r) => ({ id: r.id, name: r.name, rating: r.rating, body: r.body, source: r.source, date: r.reviewed_at, product: r.product_name || '', slug: r.product_slug || '' }));
-  const average = reviews.length ? Math.round((reviews.reduce((a, r) => a + r.rating, 0) / reviews.length) * 10) / 10 : 0;
-  res.json({ count: reviews.length, average, reviews });
+  const rated = reviews.filter((r) => r.rating > 0);
+  const average = rated.length ? Math.round((rated.reduce((a, r) => a + r.rating, 0) / rated.length) * 10) / 10 : 0;
+  res.json({ count: reviews.length, rated: rated.length, average, reviews });
 });
 
 app.post('/api/quote', async (req, res) => {
@@ -544,7 +545,7 @@ function reviewFields(b) {
   const name = clean(b.name, 60), body = clean(b.body, 1000), rating = Math.round(Number(b.rating));
   if (!name) throw fail(400, 'Customer name is required.');
   if (body.length < 3) throw fail(400, 'Write the review text.');
-  if (!(rating >= 1 && rating <= 5)) throw fail(400, 'Choose 1 to 5 stars.');
+  if (!(rating >= 0 && rating <= 5)) throw fail(400, 'Choose 1 to 5 stars, or no stars.');
   const date = /^\d{4}-\d{2}-\d{2}$/.test(String(b.reviewed_at)) ? b.reviewed_at : new Date().toISOString().slice(0, 10);
   return [Number(b.product_id) || null, name, rating, body, clean(b.source, 30), date, b.published === false ? 0 : 1];
 }

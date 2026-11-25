@@ -59,7 +59,7 @@ export default function Reviews() {
           </label>
           <label className="field half"><span>Customer first name</span><input value={form.name} onChange={(e) => set('name', e.target.value)} maxLength="60" /></label>
           <label className="field half"><span>Stars</span>
-            <select value={form.rating} onChange={(e) => set('rating', Number(e.target.value))}>{[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{n} {stars(n)}</option>)}</select>
+            <select value={form.rating} onChange={(e) => set('rating', Number(e.target.value))}>{[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{n} {stars(n)}</option>)}<option value={0}>No stars (quote only)</option></select>
           </label>
           <label className="field half"><span>Where it came from</span>
             <select value={form.source} onChange={(e) => set('source', e.target.value)}><option value="">(not shown)</option>{SOURCES.map((s) => <option key={s}>{s}</option>)}</select>
@@ -83,7 +83,7 @@ export default function Reviews() {
             <tbody>
               {data.map((r) => (
                 <tr key={r.id} className={r.published ? '' : 'dim'}>
-                  <td><strong>{r.name}</strong><div className="muted small">{stars(r.rating)}</div><div className="muted small">{r.reviewed_at}{r.source ? ` · ${r.source}` : ''}</div></td>
+                  <td><strong>{r.name}</strong>{r.rating > 0 && <div className="muted small">{stars(r.rating)}</div>}<div className="muted small">{r.reviewed_at}{r.source ? ` · ${r.source}` : ''}</div></td>
                   <td>{r.product_name || <span className="muted">Whole shop</span>}</td>
                   <td style={{ maxWidth: '46ch' }}>{r.body}</td>
                   <td className="num">

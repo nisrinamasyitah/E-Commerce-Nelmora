@@ -22,12 +22,12 @@ export default function Reviews({ slug, limit, title = 'What customers say', eye
         <div className="section-head centered">
           <p className="eyebrow">{eyebrow}</p>
           <h2>{title}</h2>
-          <p className="reviews-sum"><Stars n={Math.round(data.average)} /> <strong>{data.average.toFixed(1)}</strong> from {data.count} review{data.count > 1 ? 's' : ''}</p>
+          {data.rated > 0 && <p className="reviews-sum"><Stars n={Math.round(data.average)} /> <strong>{data.average.toFixed(1)}</strong> from {data.rated} rating{data.rated > 1 ? 's' : ''}</p>}
         </div>
         <div className="review-grid">
           {list.map((r) => (
             <figure key={r.id} className="review">
-              <Stars n={r.rating} />
+              {r.rating > 0 && <Stars n={r.rating} />}
               <blockquote>{r.body}</blockquote>
               <figcaption>
                 <strong>{r.name}</strong>
