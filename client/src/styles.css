@@ -633,7 +633,9 @@ legend { font-family: var(--serif); font-size: 1.45rem; margin-bottom: 1rem; pad
 .stars { color: var(--champagne); letter-spacing: .12em; white-space: nowrap; }
 .stars i { font-style: normal; opacity: .25; }
 
-.rv-summary { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: clamp(1.6rem, 5vw, 4rem); margin: 2.2rem auto 0; padding-bottom: clamp(1.8rem, 4vw, 2.6rem); border-bottom: 1px solid rgba(246, 240, 230, .16); max-width: 1000px; }
+.rv-layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: clamp(2rem, 5vw, 4.5rem); align-items: start; margin-top: 2.4rem; }
+.rv-layout.solo { grid-template-columns: minmax(0, 1fr); }
+.rv-summary { position: sticky; top: 6.5rem; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1.5rem; padding: 2rem 1.5rem; border: 1px solid rgba(246, 240, 230, .16); background: rgba(246, 240, 230, .04); }
 .rv-ring { position: relative; width: 148px; height: 148px; flex: none; }
 .rv-ring svg { width: 100%; height: 100%; }
 .rv-ring-track { fill: none; stroke: rgba(246, 240, 230, .14); stroke-width: 5; }
@@ -641,7 +643,7 @@ legend { font-family: var(--serif); font-size: 1.45rem; margin-bottom: 1rem; pad
 .rv-ring div { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; }
 .rv-ring strong { font-family: var(--serif); font-weight: 400; font-size: 3rem; color: var(--cream); }
 .rv-ring span { margin-top: .45rem; font-size: .68rem; letter-spacing: .18em; text-transform: uppercase; color: rgba(246, 240, 230, .6); }
-.rv-meta { display: flex; flex-direction: column; gap: .5rem; align-items: flex-start; }
+.rv-meta { display: flex; flex-direction: column; gap: .5rem; align-items: center; }
 .rv-meta p { margin: 0; font-size: .85rem; color: rgba(246, 240, 230, .65); letter-spacing: .04em; }
 .stars-frac { font-size: 1.7rem; letter-spacing: .14em; line-height: 1; background: linear-gradient(90deg, var(--champagne) var(--fill), rgba(246, 240, 230, .2) var(--fill)); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
 .rv-hist { list-style: none; margin: .8rem 0 0; padding: 0; display: flex; align-items: flex-end; gap: .9rem; }
@@ -649,18 +651,21 @@ legend { font-family: var(--serif); font-size: 1.45rem; margin-bottom: 1rem; pad
 .rv-hist em { font-style: normal; font-size: .7rem; }
 .rv-hist b { display: flex; align-items: flex-end; width: 100%; height: 52px; }
 .rv-hist i { display: block; width: 100%; background: linear-gradient(180deg, var(--champagne), #a8814b); border-radius: 3px 3px 0 0; }
-.rv-write { white-space: nowrap; }
+.rv-write { white-space: nowrap; width: 100%; }
 
-.rv-list { max-width: 1000px; margin: 0 auto; }
-.rv-row { display: grid; grid-template-columns: 190px minmax(0, 1fr) 130px; gap: clamp(1rem, 3vw, 2.4rem); padding: 1.9rem 0; border-bottom: 1px solid rgba(246, 240, 230, .16); }
-.rv-name { display: flex; flex-direction: column; gap: .4rem; font-size: 1rem; }
-.rv-name strong { font-weight: 500; }
-.review-verified { display: inline-flex; align-items: center; gap: .35rem; font-size: .78rem; color: rgba(246, 240, 230, .75); }
-.rv-main { display: flex; flex-direction: column; gap: .7rem; min-width: 0; }
-.rv-main p { margin: 0; font-size: 1.05rem; line-height: 1.7; color: rgba(246, 240, 230, .92); overflow-wrap: anywhere; }
-.rv-main a { align-self: flex-start; font-size: .85rem; color: var(--champagne); border-bottom: 1px solid rgba(232, 210, 173, .4); }
-.rv-date { text-align: right; font-size: .82rem; color: rgba(246, 240, 230, .6); display: flex; flex-direction: column; gap: .25rem; }
-.rv-date span { letter-spacing: .05em; }
+.rv-list { columns: 2 340px; column-gap: 1.4rem; }
+.rv-layout.solo .rv-list { columns: 3 300px; }
+.rv-card { break-inside: avoid; display: flex; flex-direction: column; gap: 1rem; margin: 0 0 1.4rem; padding: 1.6rem 1.6rem 1.4rem; border: 1px solid rgba(246, 240, 230, .16); background: rgba(246, 240, 230, .04); transition: border-color .2s, background .2s; }
+.rv-card:hover { border-color: rgba(232, 210, 173, .4); background: rgba(246, 240, 230, .07); }
+.rv-card header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.rv-card header time { font-size: .78rem; letter-spacing: .04em; color: rgba(246, 240, 230, .55); text-align: right; display: flex; flex-direction: column; gap: .15rem; }
+.rv-card p { margin: 0; font-size: 1.02rem; line-height: 1.7; color: rgba(246, 240, 230, .92); overflow-wrap: anywhere; }
+.rv-card footer { display: flex; align-items: center; gap: .85rem; margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(246, 240, 230, .12); }
+.rv-avatar { flex: none; width: 2.5rem; height: 2.5rem; border-radius: 50%; display: grid; place-items: center; font-family: var(--serif); font-size: 1.15rem; color: var(--champagne); border: 1px solid rgba(232, 210, 173, .45); }
+.rv-who { display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
+.rv-who strong { font-weight: 500; font-size: .98rem; }
+.review-verified { display: inline-flex; align-items: center; gap: .35rem; font-size: .78rem; color: rgba(246, 240, 230, .7); }
+.rv-who a { align-self: flex-start; font-size: .82rem; color: var(--champagne); border-bottom: 1px solid rgba(232, 210, 173, .4); }
 
 .rv-empty { text-align: center; margin: 1.6rem auto 0; display: flex; flex-direction: column; align-items: center; gap: 1.3rem; }
 .rv-empty p { margin: 0; color: rgba(246, 240, 230, .75); }
@@ -682,13 +687,13 @@ legend { font-family: var(--serif); font-size: 1.45rem; margin-bottom: 1rem; pad
 .rv-thanks p { margin: 0; color: var(--muted); max-width: 46ch; }
 .rv-form .stars { color: var(--wine); }
 
+@media (max-width: 960px) {
+  .rv-layout { grid-template-columns: 1fr; }
+  .rv-summary { position: static; max-width: 440px; width: 100%; margin: 0 auto; }
+}
 @media (max-width: 800px) {
-  .rv-summary { flex-direction: column; text-align: center; }
-  .rv-meta { align-items: center; }
-  .rv-write { width: 100%; max-width: 360px; }
-  .rv-row { grid-template-columns: 1fr; gap: .6rem; padding: 1.5rem 0; }
-  .rv-name { flex-direction: row; align-items: center; gap: .8rem; flex-wrap: wrap; }
-  .rv-date { text-align: left; flex-direction: row; gap: .8rem; }
+  .rv-list, .rv-layout.solo .rv-list { columns: 1; }
+  .rv-card { padding: 1.3rem 1.2rem 1.1rem; }
   .rv-verify-grid { grid-template-columns: 1fr; }
 }
 

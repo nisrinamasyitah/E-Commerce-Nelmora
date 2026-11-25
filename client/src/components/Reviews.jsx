@@ -8,17 +8,20 @@ const Check = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" 
 
 function Row({ r, showScent }) {
   return (
-    <article className="rv-row">
-      <div className="rv-name">
-        <strong>{r.name}</strong>
-        {r.verified && <span className="review-verified"><Check /> Verified buyer</span>}
-      </div>
-      <div className="rv-main">
-        {r.rating > 0 && <Stars n={r.rating} />}
-        <p>{r.body}</p>
-        {showScent && r.slug && <Link to={`/shop/${r.slug}`}>{r.product}</Link>}
-      </div>
-      <div className="rv-date">{when(r.date)}{r.source && !r.name.toLowerCase().includes(r.source.toLowerCase()) && <span>{r.source}</span>}</div>
+    <article className="rv-card">
+      <header>
+        {r.rating > 0 ? <Stars n={r.rating} /> : <span />}
+        <time>{when(r.date)}{r.source && !r.name.toLowerCase().includes(r.source.toLowerCase()) && <span>{r.source}</span>}</time>
+      </header>
+      <p>{r.body}</p>
+      <footer>
+        <span className="rv-avatar" aria-hidden="true">{(r.name || '?').trim().charAt(0).toUpperCase()}</span>
+        <div className="rv-who">
+          <strong>{r.name}</strong>
+          {r.verified && <span className="review-verified"><Check /> Verified buyer</span>}
+          {showScent && r.slug && <Link to={`/shop/${r.slug}`}>{r.product}</Link>}
+        </div>
+      </footer>
     </article>
   );
 }
@@ -131,6 +134,7 @@ export default function Reviews({ slug, productName, limit, title = 'Customer re
   if (!data.count && !slug) return null;
   const cap = limit || (all ? 100 : 6);
   const list = data.reviews.slice(0, cap);
+  const hasSummary = data.rated > 0 || !!slug;
 
   return (
     <section className="section reviews" id="reviews">
@@ -139,7 +143,7 @@ export default function Reviews({ slug, productName, limit, title = 'Customer re
           <p className="eyebrow light">{eyebrow}</p>
           <h2>{title}</h2>
         </div>
-        {data.count > 0 ? <Summary data={data} onWrite={slug ? () => setWriting(true) : null} /> : (
+        {data.count === 0 && (
           <div className="rv-empty">
             <p>No reviews yet. Be the first to share how {productName || 'it'} wears.</p>
             <button className="btn btn-outline-light" onClick={() => setWriting(true)}>Write a review</button>
@@ -147,7 +151,10 @@ export default function Reviews({ slug, productName, limit, title = 'Customer re
         )}
         {writing && slug && <ReviewForm slug={slug} productName={productName} onClose={() => setWriting(false)} onSubmitted={load} />}
         {data.count > 0 && (
-          <div className="rv-list">{list.map((r) => <Row key={r.id} r={r} showScent={!slug} />)}</div>
+          <div className={`rv-layout${hasSummary ? '' : ' solo'}`}>
+            {hasSummary && <Summary data={data} onWrite={slug ? () => setWriting(true) : null} />}
+            <div className="rv-list">{list.map((r) => <Row key={r.id} r={r} showScent={!slug} />)}</div>
+          </div>
         )}
         {!limit && data.count > 6 && !all && <div className="center mt-lg"><button className="btn btn-outline-light" onClick={() => setAll(true)}>Show all {data.count} reviews</button></div>}
       </div>

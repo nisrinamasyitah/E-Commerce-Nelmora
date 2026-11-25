@@ -138,7 +138,7 @@ export default function Home() {
         </div>
       </section>
 
-      <Reviews limit={3} />
+      <Reviews limit={4} />
 
       {/* ---------- service ---------- */}
       <section className="service">
