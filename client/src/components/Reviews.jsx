@@ -71,7 +71,7 @@ function ReviewForm({ slug, productName, onClose }) {
     return (
       <div className="rv-form rv-thanks" role="status">
         <h3>Terima kasih! Thank you.</h3>
-        <p>Your review of {productName} will appear once we have checked it.{f.email && f.order && !state.done.verified ? ' We could not match that order number, so it will not carry the Verified buyer label.' : ''}</p>
+        <p>Your review of {productName} is now live.{f.email && f.order && !state.done.verified ? ' We could not match that order number, so it will not carry the Verified buyer label.' : ''}</p>
         <button className="btn btn-ghost" onClick={onClose}>Close</button>
       </div>
     );

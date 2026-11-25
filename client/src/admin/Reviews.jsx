@@ -50,7 +50,7 @@ export default function Reviews() {
       </div>
       <p className="muted small" style={{ maxWidth: '60ch' }}>
         Add only real feedback from real customers, with their permission, and use first names only. Keep their own words, including Malay.
-        Reviews appear on the scent page they belong to, and on the home page.
+        Reviews appear on the scent page they belong to, and on the home page. Reviews that customers write themselves go live straight away, so use Hide or Delete if you need to remove one.
       </p>
 
       {pending.length > 0 && (

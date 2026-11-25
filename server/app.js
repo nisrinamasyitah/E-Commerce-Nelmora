@@ -233,6 +233,7 @@ app.post('/api/reviews', async (req, res) => {
   if (!name) return res.status(400).json({ error: 'Please enter your name.' });
   if (!(rating >= 1 && rating <= 5)) return res.status(400).json({ error: 'Please choose 1 to 5 stars.' });
   if (body.length < 10) return res.status(400).json({ error: 'Please write a little more (at least 10 characters).' });
+  if (/https?:\/\/|www\.|\.(com|net|org|my|xyz|shop)\b/i.test(body + ' ' + name)) return res.status(400).json({ error: 'Please leave links out of your review.' });
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'That email address does not look right.' });
   // "Verified buyer" only when the order number + email match a paid order that contains this scent.
   let verified = 0;
@@ -242,7 +243,7 @@ app.post('/api/reviews', async (req, res) => {
     if (o && await db.get('SELECT 1 x FROM order_items oi JOIN variants v ON v.id = oi.variant_id WHERE oi.order_id = ? AND v.product_id = ?', [o.id, product.id])) verified = 1;
   }
   await hit(key);
-  await db.run("INSERT INTO reviews (product_id, name, rating, body, source, reviewed_at, published, pending, verified, email) VALUES (?, ?, ?, ?, 'Website', date('now'), 0, 1, ?, ?)",
+  await db.run("INSERT INTO reviews (product_id, name, rating, body, source, reviewed_at, published, pending, verified, email) VALUES (?, ?, ?, ?, 'Website', date('now'), 1, 0, ?, ?)",
     [product.id, name, rating, body, verified, email]);
   res.json({ ok: true, verified: !!verified });
 });
