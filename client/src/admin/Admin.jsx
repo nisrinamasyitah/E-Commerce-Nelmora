@@ -5,6 +5,7 @@ import Dashboard from './Dashboard';
 import Orders from './Orders';
 import Products from './Products';
 import Messages from './Messages';
+import Reviews from './Reviews';
 import Settings from './Settings';
 import './admin.css';
 
@@ -54,6 +55,7 @@ export default function Admin() {
             <NavLink end to="/admin">Dashboard</NavLink>
             <NavLink to="/admin/orders">Orders</NavLink>
             <NavLink to="/admin/products">Products & stock</NavLink>
+            <NavLink to="/admin/reviews">Reviews</NavLink>
             <NavLink to="/admin/messages">Messages</NavLink>
             <NavLink to="/admin/settings">Settings</NavLink>
           </nav>
@@ -68,6 +70,7 @@ export default function Admin() {
             <Route path="orders" element={<Orders />} />
             <Route path="orders/:id" element={<Orders />} />
             <Route path="products" element={<Products />} />
+            <Route path="reviews" element={<Reviews />} />
             <Route path="messages" element={<Messages />} />
             <Route path="settings" element={<Settings />} />
           </Routes>

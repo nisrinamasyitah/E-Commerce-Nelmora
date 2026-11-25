@@ -626,3 +626,15 @@ legend { font-family: var(--serif); font-size: 1.45rem; margin-bottom: 1rem; pad
 .footer-base .pay-accept { justify-content: flex-end; }
 .pdp-pay .pay-logos { justify-content: flex-end; }
 @media (max-width: 600px) { .pay-logo { width: 46px; height: 29px; } .footer-base .pay-accept { justify-content: flex-start; } }
+
+/* ------------------------------------------------ customer reviews */
+.reviews { background: var(--cream); }
+.reviews-sum { margin: .8rem 0 0; font-size: .95rem; color: var(--muted); }
+.stars { color: var(--wine); letter-spacing: .12em; }
+.stars i { font-style: normal; opacity: .22; }
+.review-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(1rem, 2.4vw, 2rem); margin-top: 2.2rem; }
+.review { flex: 1 1 280px; max-width: 420px; margin: 0; background: #fff; border: 1px solid var(--line); padding: 1.6rem 1.5rem; display: flex; flex-direction: column; gap: .9rem; }
+.review blockquote { margin: 0; font-family: var(--serif); font-size: 1.12rem; line-height: 1.55; flex: 1; }
+.review figcaption { display: flex; flex-direction: column; gap: .15rem; font-size: .85rem; }
+.review figcaption span { color: var(--muted); }
+.review figcaption a { color: var(--wine); }

@@ -204,6 +204,20 @@ app.get('/api/products/:slug', async (req, res) => {
   res.json(publicProduct(p));
 });
 
+// Customer reviews. The shop owner enters these in Admin from real customer feedback; nothing is generated here.
+app.get('/api/reviews', async (req, res) => {
+  const slug = clean(req.query.product, 80);
+  const rows = await db.all(
+    `SELECT r.id, r.name, r.rating, r.body, r.source, r.reviewed_at, p.name product_name, p.slug product_slug
+       FROM reviews r LEFT JOIN products p ON p.id = r.product_id
+      WHERE r.published = 1 ${slug ? 'AND p.slug = ?' : ''} ORDER BY r.reviewed_at DESC, r.id DESC LIMIT 100`,
+    slug ? [slug] : [],
+  );
+  const reviews = rows.map((r) => ({ id: r.id, name: r.name, rating: r.rating, body: r.body, source: r.source, date: r.reviewed_at, product: r.product_name || '', slug: r.product_slug || '' }));
+  const average = reviews.length ? Math.round((reviews.reduce((a, r) => a + r.rating, 0) / reviews.length) * 10) / 10 : 0;
+  res.json({ count: reviews.length, average, reviews });
+});
+
 app.post('/api/quote', async (req, res) => {
   const s = await getSettings();
   const q = quote(req.body.items, req.body.state, s, await variantFinder(db, req.body.items));
@@ -524,10 +538,33 @@ app.patch('/api/admin/messages/:id', async (req, res) => {
   res.json({ ok: true });
 });
 
+app.get('/api/admin/reviews', async (_req, res) => res.json(await db.all(
+  `SELECT r.*, p.name product_name FROM reviews r LEFT JOIN products p ON p.id = r.product_id ORDER BY r.reviewed_at DESC, r.id DESC`)));
+function reviewFields(b) {
+  const name = clean(b.name, 60), body = clean(b.body, 1000), rating = Math.round(Number(b.rating));
+  if (!name) throw fail(400, 'Customer name is required.');
+  if (body.length < 3) throw fail(400, 'Write the review text.');
+  if (!(rating >= 1 && rating <= 5)) throw fail(400, 'Choose 1 to 5 stars.');
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(String(b.reviewed_at)) ? b.reviewed_at : new Date().toISOString().slice(0, 10);
+  return [Number(b.product_id) || null, name, rating, body, clean(b.source, 30), date, b.published === false ? 0 : 1];
+}
+app.post('/api/admin/reviews', async (req, res) => {
+  const r = await db.run('INSERT INTO reviews (product_id, name, rating, body, source, reviewed_at, published) VALUES (?, ?, ?, ?, ?, ?, ?)', reviewFields(req.body));
+  res.json({ id: r.lastInsertRowid });
+});
+app.put('/api/admin/reviews/:id', async (req, res) => {
+  await db.run('UPDATE reviews SET product_id = ?, name = ?, rating = ?, body = ?, source = ?, reviewed_at = ?, published = ? WHERE id = ?', [...reviewFields(req.body), req.params.id]);
+  res.json({ ok: true });
+});
+app.delete('/api/admin/reviews/:id', async (req, res) => {
+  await db.run('DELETE FROM reviews WHERE id = ?', [req.params.id]);
+  res.json({ ok: true });
+});
+
 // Full data export (JSON). The online database also keeps its own backups.
 app.get('/api/admin/backup', async (_req, res) => {
   const data = { exported_at: new Date().toISOString() };
-  for (const t of ['products', 'variants', 'orders', 'order_items', 'messages', 'subscribers', 'settings']) data[t] = await db.all(`SELECT * FROM ${t}`);
+  for (const t of ['products', 'variants', 'orders', 'order_items', 'messages', 'subscribers', 'reviews', 'settings']) data[t] = await db.all(`SELECT * FROM ${t}`);
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Content-Disposition', `attachment; filename="nelmora-shop-${new Date().toISOString().slice(0, 10)}.json"`);
   res.send(JSON.stringify(data, null, 2));

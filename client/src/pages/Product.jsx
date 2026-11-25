@@ -4,6 +4,7 @@ import { useStore } from '../store';
 import { rm, notesList, noteImage, useTitle } from '../lib';
 import PaymentLogos from '../components/PaymentLogos';
 import QtyInput from '../components/QtyInput';
+import Reviews from '../components/Reviews';
 import ProductCard from '../components/ProductCard';
 import NotFound from './NotFound';
 
@@ -141,6 +142,8 @@ export default function Product() {
           </div>
         </div>
       </section>
+
+      <Reviews slug={product.slug} title={`Reviews for ${product.name}`} />
 
       {related.length > 0 && (
         <section className="section">

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useStore } from '../store';
 import ProductCard from '../components/ProductCard';
+import Reviews from '../components/Reviews';
 import { rm, MOODS, inMood, useTitle } from '../lib';
 
 const TABS = [['best', 'Bestsellers'], ['Women', 'For Her'], ['Men', 'For Him']];
@@ -136,6 +137,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <Reviews limit={3} />
 
       {/* ---------- service ---------- */}
       <section className="service">
