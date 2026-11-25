@@ -269,6 +269,22 @@ async function init() {
       args: [slug, name, body, date],
     })), 'write');
   }
+  // One-time: six more Horizon reviews from customer feedback (sent by staff). Runs once per database, even if reviews already exist.
+  const seedHorizon = await db.run("INSERT OR IGNORE INTO settings (key, value) VALUES ('migration_reviews_2', 'true')");
+  if (seedHorizon.changes) {
+    const quotes = [
+      ['Amir Hakim', 'Fresh citrus smell, memang clean and masculine!', '2026-01-08'],
+      ['Daniel Tan', 'Love the bergamot scent. Very refreshing and tak terlalu strong.', '2026-02-19'],
+      ['Muhammad Iqbal', 'Bau dia quite classy, sesuai untuk everyday use.', '2026-03-05'],
+      ['Arjun Kumar', 'Simple but elegant. The earthy smell makes it even better.', '2026-04-22'],
+      ['Faris Zulkifli', 'Suka sebab ada fresh and woody combination. Very nice!', '2026-05-11'],
+      ['Jason Lim', 'Smells fresh and mature. Definitely my kind of fragrance.', '2026-06-27'],
+    ];
+    await client.batch(quotes.map(([name, body, date]) => ({
+      sql: "INSERT INTO reviews (product_id, name, rating, body, source, reviewed_at, published) VALUES ((SELECT id FROM products WHERE slug = 'horizon'), ?, 0, ?, '', ?, 1)",
+      args: [name, body, date],
+    })), 'write');
+  }
   const mark = await db.run("INSERT OR IGNORE INTO settings (key, value) VALUES ('migration_bestsellers_1', 'true')");
   if (mark.changes) {
     const best = ['victus-cologne', 'horizon', 'elara', 'aura'];
