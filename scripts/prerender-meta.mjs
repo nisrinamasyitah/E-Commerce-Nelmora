@@ -41,7 +41,8 @@ for (const [path, title, desc] of pages) {
       .replace(/(<meta name="description" content=")[^"]*(")/, `$1${esc(desc)}$2`)
       .replace(/(<meta property="og:description" content=")[^"]*(")/, `$1${esc(desc)}$2`);
   }
-  mkdirSync(join(dist, path), { recursive: true });
-  writeFileSync(join(dist, path, 'index.html'), out);
+  // Written as shop/horizon.html (not shop/horizon/index.html): Netlify then serves /shop/horizon directly, with no redirect to a trailing slash.
+  mkdirSync(dirname(join(dist, path)), { recursive: true });
+  writeFileSync(join(dist, `${path}.html`), out);
 }
 console.log(`prerender-meta: wrote ${pages.length} pages (${products.length} scents)`);
